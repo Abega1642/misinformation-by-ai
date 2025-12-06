@@ -5,6 +5,7 @@ import dev.razafindratelo.misinformation.exception.ApiKeyGenerationException;
 import dev.razafindratelo.misinformation.exception.DirectoryUploadException;
 import dev.razafindratelo.misinformation.exception.HmacCalculationException;
 import dev.razafindratelo.misinformation.exception.InvalidAuthorizationFormatException;
+import dev.razafindratelo.misinformation.exception.MediaUploadException;
 import dev.razafindratelo.misinformation.exception.MissingAuthorizationException;
 import dev.razafindratelo.misinformation.exception.TemplateLoadingException;
 import jakarta.persistence.EntityNotFoundException;
@@ -241,6 +242,22 @@ public class ApiExceptionHandler {
             HttpStatus.BAD_REQUEST, ex.getMessage(), getRequestPath(request), "VALIDATION_ERROR");
 
     return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+  }
+
+  @ExceptionHandler(MediaUploadException.class)
+  public ResponseEntity<ErrorResponse> handleMediaUploadException(
+      MediaUploadException ex, WebRequest request) {
+
+    log.error("Media upload failed: {}", ex.getMessage(), ex);
+
+    var errorResponse =
+        ErrorResponse.of(
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            ex.getMessage(),
+            getRequestPath(request),
+            "MEDIA_UPLOAD_FAILED");
+
+    return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
   }
 
   private String getRequestPath(WebRequest request) {
