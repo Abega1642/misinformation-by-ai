@@ -50,7 +50,11 @@ public class SecurityConf {
                     .permitAll()
                     .requestMatchers(GET, "/")
                     .permitAll()
-                    .requestMatchers(POST, "/users/**")
+                    .requestMatchers(POST, "/users/sign-up")
+                    .permitAll()
+                    .requestMatchers(POST, "/auth/token")
+                    .permitAll()
+                    .requestMatchers(POST, "/auth/login")
                     .permitAll()
                     .requestMatchers(
                         "/",

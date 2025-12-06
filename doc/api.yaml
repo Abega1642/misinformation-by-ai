@@ -351,13 +351,6 @@ paths:
         **Bearer token authentication.**
       security:
         - BearerAuth: [ ]
-      parameters:
-        - name: userEmail
-          in: query
-          required: true
-          description: Email of the user uploading the text instance
-          schema:
-            $ref: "#/components/schemas/Email"
       requestBody:
         required: true
         content:
