@@ -1,0 +1,8 @@
+package dev.razafindratelo.misinformation.endpoint.rest.controller.model;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import java.time.LocalDate;
+
+public record TokenRequest(
+    @NotNull @NotBlank String clerkId, @NotNull @NotBlank String token, LocalDate expirationDate) {}

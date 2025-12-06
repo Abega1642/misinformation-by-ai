@@ -427,6 +427,26 @@ paths:
               schema:
                 $ref: "#/components/schemas/User"
 
+  /auth/token:
+    post:
+      summary: Post the token of the user
+      operationId: saveToken
+      tags:
+        - Authentication
+      requestBody:
+        description: Token instance
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TokenRequest"
+      responses:
+        200:
+          description: token instance saved with success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Token"
+
 
 components:
   responses:
@@ -714,6 +734,31 @@ components:
         description:
           type: string
 
+    TokenRequest:
+      type: object
+      properties:
+        clerk_id:
+          $ref: "#/components/schemas/UUID"
+        token:
+          type: string
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
+        expiration_date:
+          type: string
+          format: date
+
+    Token:
+      type: object
+      properties:
+        id:
+          $ref: "#/components/schemas/UUID"
+        owner:
+          $ref: "#/components/schemas/User"
+        token:
+          type: string
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
+        expiration_date:
+          type: string
+          format: date
 
     ErrorResponse:
       type: object
@@ -763,7 +808,7 @@ components:
         - error
         - message
         - path
-    
+
     LoginRequest:
       type: object
       required: [ email, clerk_id ]

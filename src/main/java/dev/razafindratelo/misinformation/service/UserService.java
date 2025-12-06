@@ -34,6 +34,18 @@ public class UserService {
   private final Paginator paginator;
   private final UserRepository userRepository;
 
+  public User findByClerkId(@NotNull @NotBlank String id) {
+    var jUser =
+        userRepository
+            .findByClerkId(id)
+            .orElseThrow(
+                () -> new EntityNotFoundException(format("User with id %s not found", id)));
+
+    log.info("Requesting findByClerkId: {}", id);
+
+    return userMapper.toCoreModel(jUser);
+  }
+
   public User findByEmail(@Email @NotBlank @NotNull String email) {
     var jUser =
         userRepository
