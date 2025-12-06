@@ -1,5 +1,7 @@
 package dev.razafindratelo.misinformation.endpoint.rest.controller.health;
 
+import static java.util.UUID.randomUUID;
+
 import dev.razafindratelo.misinformation.InfraGenerated;
 import dev.razafindratelo.misinformation.file.BucketComponent;
 import java.io.File;
@@ -7,7 +9,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.time.Duration;
-import java.util.UUID;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,7 +25,7 @@ public class HealthBucketController {
   @GetMapping("/health/bucket")
   public ResponseEntity<String> file_can_be_uploaded_then_signed() throws IOException {
     String fileSuffix = ".txt";
-    String filePrefix = UUID.randomUUID().toString();
+    String filePrefix = randomUUID().toString();
     File fileToUpload = Files.createTempFile(filePrefix, fileSuffix).toFile();
     writeRandomContent(fileToUpload);
 
@@ -32,13 +33,13 @@ public class HealthBucketController {
     bucketComponent.upload(fileToUpload, fileBucketKey);
 
     File downloaded = bucketComponent.download(fileBucketKey);
-    if (!Files.readString(fileToUpload.toPath()).equals(Files.readString(downloaded.toPath()))) {
-      throw new RuntimeException("Uploaded and downloaded content mismatch");
-    }
 
-    String dirPrefix = "dir-" + UUID.randomUUID();
+    if (!Files.readString(fileToUpload.toPath()).equals(Files.readString(downloaded.toPath())))
+      throw new RuntimeException("Uploaded and downloaded content mismatch");
+
+    String dirPrefix = "dir-" + randomUUID();
     File dir = Files.createTempDirectory(dirPrefix).toFile();
-    File fInDir = new File(dir, UUID.randomUUID() + ".txt");
+    File fInDir = new File(dir, randomUUID() + ".txt");
     writeRandomContent(fInDir);
     String dirBucketKey = HEALTH_KEY + "/" + dirPrefix;
     bucketComponent.upload(dir, dirBucketKey);
@@ -49,7 +50,7 @@ public class HealthBucketController {
 
   private void writeRandomContent(File file) throws IOException {
     try (FileWriter writer = new FileWriter(file)) {
-      writer.write(UUID.randomUUID().toString());
+      writer.write(randomUUID().toString());
     }
   }
 }
