@@ -53,7 +53,7 @@ public class UserService {
                     new AuthorizationDeniedException(
                         format("Authorization denied from email=%s", email)));
     log.info(
-        "Authenticate user with email={} and clerk_id={}", jUser.getEmail(), jUser.getClerkId());
+        "Authenticate owner with email={} and clerk_id={}", jUser.getEmail(), jUser.getClerkId());
 
     return userMapper.toCoreModel(jUser);
   }
@@ -65,7 +65,7 @@ public class UserService {
         new JUser(
             id, userRequest.email(), userRequest.fullName(), userRequest.clerkId(), createdAt);
     log.info(
-        "Request creating user with email={}, clerk_id={} and full_name={}",
+        "Request creating owner with email={}, clerk_id={} and full_name={}",
         newUser.getEmail(),
         newUser.getClerkId(),
         newUser.getFullName());
@@ -78,7 +78,7 @@ public class UserService {
         userRepository
             .findByEmail(email)
             .orElseThrow(
-                () -> new EntityNotFoundException(format("No user with email=%s.", email)));
+                () -> new EntityNotFoundException(format("No owner with email=%s.", email)));
 
     return userMapper.toCoreModel(jUser);
   }

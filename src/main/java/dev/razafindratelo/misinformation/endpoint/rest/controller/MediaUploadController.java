@@ -26,7 +26,7 @@ public class MediaUploadController {
       @RequestParam("file") @NotNull MultipartFile file,
       @RequestParam("userEmail") @Email String userEmail) {
 
-    log.info("Video upload request received from user with email={}", userEmail);
+    log.info("Video upload request received from owner with email={}", userEmail);
 
     Video uploadedVideo = mediaService.uploadVideo(file, userEmail);
     return ResponseEntity.ok(uploadedVideo);
@@ -37,7 +37,7 @@ public class MediaUploadController {
       @RequestParam("file") @NotNull MultipartFile file,
       @RequestParam("userEmail") @Email String userEmail) {
 
-    log.info("Image upload request received from user with email={}", userEmail);
+    log.info("Image upload request received from owner with email={}", userEmail);
 
     return mediaService.uploadImage(file, userEmail);
   }

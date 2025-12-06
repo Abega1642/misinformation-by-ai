@@ -52,7 +52,7 @@ public class MediaService {
       String bucketKey = generateBucketKey("videos");
 
       log.info(
-          "Uploading video: id={}, name={}, duration={}, bucketKey={}, user={}",
+          "Uploading video: id={}, name={}, duration={}, bucketKey={}, owner={}",
           video.getId(),
           video.getFileName(),
           video.getDuration(),
@@ -68,7 +68,7 @@ public class MediaService {
 
       return video;
     } catch (IOException e) {
-      log.error("Failed to upload video for user: {}", userEmail, e);
+      log.error("Failed to upload video for owner: {}", userEmail, e);
       throw new MediaUploadException("Failed to upload video : " + e);
     }
   }
@@ -84,7 +84,7 @@ public class MediaService {
       String bucketKey = generateBucketKey("images");
 
       log.info(
-          "Uploading image: id={}, name={}, format={}, bucketKey={}, user={}",
+          "Uploading image: id={}, name={}, format={}, bucketKey={}, owner={}",
           image.getId(),
           image.getFileName(),
           image.getFormat(),
@@ -100,7 +100,7 @@ public class MediaService {
 
       return image;
     } catch (IOException e) {
-      log.error("Failed to upload image for user: {}", userEmail, e);
+      log.error("Failed to upload image for owner: {}", userEmail, e);
       throw new MediaUploadException("Failed to upload image : " + e);
     }
   }

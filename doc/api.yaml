@@ -340,6 +340,57 @@ paths:
         "500":
           $ref: "#/components/responses/InternalServerError"
 
+  /api/media/texts/upload:
+    post:
+      operationId: uploadText
+      tags:
+        - Text
+      summary: Upload texts
+      description: >
+        Uploads text to be treated later.
+        **Bearer token authentication.**
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: userEmail
+          in: query
+          required: true
+          description: Email of the user uploading the text instance
+          schema:
+            $ref: "#/components/schemas/Email"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TextRequest"
+      responses:
+        "200":
+          description: Text instance uploaded successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Text"
+        "400":
+          description: Invalid request - missing properties
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                timestamp: "2025-11-04T10:30:00Z"
+                status: 400
+                error: "Bad Request"
+                message: "Video file is required and userEmail must be valid"
+                path: "/api/media/texts/upload"
+                errorCode: "BAD_FORM"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/InvalidClientCredentials"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
   /users:
     get:
       summary: Get all registered users
@@ -884,6 +935,28 @@ components:
               type: integer
               format: int32
               description: Audio sample rate in Hz
+
+    TextRequest:
+      type: object
+      properties:
+        email:
+          $ref: "#/components/schemas/Email"
+        text:
+          type: string
+          example: The sun is black
+
+    Text:
+      type: object
+      properties:
+        id:
+          $ref: "#/components/schemas/UUID"
+        owner:
+          $ref: "#/components/schemas/User"
+        value:
+          type: string
+          example: The sun is black
+        created_at:
+          $ref: "#/components/schemas/Date"
 
 security:
   - BearerAuth: [ ]
