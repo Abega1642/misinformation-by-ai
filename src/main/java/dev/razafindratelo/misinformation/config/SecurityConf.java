@@ -1,6 +1,7 @@
 package dev.razafindratelo.misinformation.config;
 
 import static org.springframework.http.HttpMethod.GET;
+import static org.springframework.http.HttpMethod.POST;
 
 import dev.razafindratelo.misinformation.InfraGenerated;
 import org.springframework.context.annotation.Bean;
@@ -28,6 +29,10 @@ public class SecurityConf {
                     .requestMatchers("/actuator/**")
                     .permitAll()
                     .requestMatchers(GET, "/")
+                    .permitAll()
+                    .requestMatchers(GET, "/users/**")
+                    .permitAll()
+                    .requestMatchers(POST, "/users/**")
                     .permitAll()
                     .requestMatchers(
                         "/",
