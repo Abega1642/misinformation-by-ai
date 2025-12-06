@@ -30,14 +30,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 @RequiredArgsConstructor
 public class TokenFilter extends OncePerRequestFilter {
 
-  private static final List<String> SECURED_PATHS =
-      List.of(
-          "/users",
-          "/api/media/videos/**",
-          "/api/media/images/**",
-          "/api/media/texts/**",
-          "/api/media/audios/**",
-          "/api/texts/**");
+  private static final List<String> SECURED_PATHS = List.of();
 
   private static final String BEARER_PREFIX = "Bearer ";
   private static final int MIN_TOKEN_LENGTH = 10;

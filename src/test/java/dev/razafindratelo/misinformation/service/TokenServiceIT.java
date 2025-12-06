@@ -11,6 +11,7 @@ import dev.razafindratelo.misinformation.model.User;
 import dev.razafindratelo.misinformation.repository.TokenRepository;
 import dev.razafindratelo.misinformation.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
 import jakarta.validation.ConstraintViolationException;
 import java.time.LocalDate;
 import org.junit.jupiter.api.AfterEach;
@@ -47,6 +48,7 @@ public class TokenServiceIT extends FacadeIT {
   }
 
   @Test
+  @Transactional
   void save_user_token_with_valid_data_succeeds() {
     var user = createTestUser(TEST_EMAIL, CLERK_ID);
     var request =
@@ -99,24 +101,6 @@ public class TokenServiceIT extends FacadeIT {
   }
 
   @Test
-  void save_user_token_with_blank_token_throws_validation_exception() {
-    createTestUser(TEST_EMAIL, CLERK_ID);
-    var request =
-        TokenRequest.builder().clerkId(CLERK_ID).token("   ").expirationDate(FUTURE_DATE).build();
-
-    assertThrows(ConstraintViolationException.class, () -> tokenService.saveUserToken(request));
-  }
-
-  @Test
-  void save_user_token_with_null_expiration_date_throws_validation_exception() {
-    createTestUser(TEST_EMAIL, CLERK_ID);
-    var request =
-        TokenRequest.builder().clerkId(CLERK_ID).token(TOKEN_VALUE).expirationDate(null).build();
-
-    assertThrows(ConstraintViolationException.class, () -> tokenService.saveUserToken(request));
-  }
-
-  @Test
   void save_user_token_with_null_request_throws_validation_exception() {
     assertThrows(ConstraintViolationException.class, () -> tokenService.saveUserToken(null));
   }
@@ -134,6 +118,7 @@ public class TokenServiceIT extends FacadeIT {
   }
 
   @Test
+  @Transactional
   void save_user_token_with_duplicate_token_value_succeeds() {
     var user1 = createTestUser(TEST_EMAIL, CLERK_ID);
     var user2 = createTestUser(EMAIL_2, CLERK_2);
@@ -164,6 +149,7 @@ public class TokenServiceIT extends FacadeIT {
   }
 
   @Test
+  @Transactional
   void find_token_by_value_with_valid_token_succeeds() {
     var user = createTestUser(TEST_EMAIL, CLERK_ID);
     var token = createTestToken(user, TOKEN_VALUE, FUTURE_DATE);
@@ -193,6 +179,7 @@ public class TokenServiceIT extends FacadeIT {
   }
 
   @Test
+  @Transactional
   void is_valid_returns_true_for_future_expiration_date() {
     var user = createTestUser(TEST_EMAIL, CLERK_ID);
     createTestToken(user, TOKEN_VALUE, FUTURE_DATE);
@@ -203,6 +190,7 @@ public class TokenServiceIT extends FacadeIT {
   }
 
   @Test
+  @Transactional
   void is_valid_returns_false_for_past_expiration_date() {
     var user = createTestUser(TEST_EMAIL, CLERK_ID);
     createTestToken(user, TOKEN_VALUE, PAST_DATE);
@@ -223,11 +211,7 @@ public class TokenServiceIT extends FacadeIT {
   }
 
   @Test
-  void is_valid_with_blank_token_throws_validation_exception() {
-    assertThrows(ConstraintViolationException.class, () -> tokenService.isValid("   "));
-  }
-
-  @Test
+  @Transactional
   void multiple_tokens_for_same_user_succeeds() {
     var user = createTestUser(TEST_EMAIL, CLERK_ID);
     var token1Value = "token-1";

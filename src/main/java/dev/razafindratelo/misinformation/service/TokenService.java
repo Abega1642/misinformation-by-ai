@@ -8,21 +8,24 @@ import dev.razafindratelo.misinformation.mapper.TokenMapper;
 import dev.razafindratelo.misinformation.model.Token;
 import dev.razafindratelo.misinformation.repository.TokenRepository;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.validation.annotation.Validated;
 
 @Service
 @Slf4j
+@Validated
 @RequiredArgsConstructor
 public class TokenService {
   private final UserService userService;
   private final TokenMapper tokenMapper;
   private final TokenRepository tokenRepository;
 
-  public Token saveUserToken(@NotNull TokenRequest tokenRequest) {
+  public Token saveUserToken(@NotNull @Valid TokenRequest tokenRequest) {
     var id = randomUUID().toString();
     var owner = userService.findByClerkId(tokenRequest.clerkId());
 

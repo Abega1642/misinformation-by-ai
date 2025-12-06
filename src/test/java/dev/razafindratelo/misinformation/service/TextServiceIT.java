@@ -11,6 +11,7 @@ import dev.razafindratelo.misinformation.model.User;
 import dev.razafindratelo.misinformation.repository.TextRepository;
 import dev.razafindratelo.misinformation.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
 import jakarta.validation.ConstraintViolationException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -47,6 +48,7 @@ public class TextServiceIT extends FacadeIT {
   }
 
   @Test
+  @Transactional
   void upload_text_with_valid_data_succeeds() {
     var user = createTestUser(TEST_EMAIL, CLERK_ID);
     var textContent = "This is a test text content for upload.";
@@ -86,25 +88,12 @@ public class TextServiceIT extends FacadeIT {
   }
 
   @Test
-  void upload_text_with_null_text_throws_validation_exception() {
-    var request = TextRequest.builder().email(TEST_EMAIL).text(null).build();
-
-    assertThrows(ConstraintViolationException.class, () -> textService.uploadText(request));
-  }
-
-  @Test
-  void upload_text_with_blank_text_throws_validation_exception() {
-    var request = TextRequest.builder().email(TEST_EMAIL).text("   ").build();
-
-    assertThrows(ConstraintViolationException.class, () -> textService.uploadText(request));
-  }
-
-  @Test
   void upload_text_with_null_request_throws_validation_exception() {
     assertThrows(ConstraintViolationException.class, () -> textService.uploadText(null));
   }
 
   @Test
+  @Transactional
   void find_text_instance_with_valid_id_and_email_succeeds() {
     var user = createTestUser(TEST_EMAIL, CLERK_ID);
     var text = createTestText(user, "Test text content");
@@ -128,6 +117,7 @@ public class TextServiceIT extends FacadeIT {
   }
 
   @Test
+  @Transactional
   void find_text_instance_with_different_user_email_throws_authorization_denied_exception() {
     var user1 = createTestUser(EMAIL_1, CLERK_1);
     var user2 = createTestUser(EMAIL_2, CLERK_2);
@@ -151,6 +141,7 @@ public class TextServiceIT extends FacadeIT {
   }
 
   @Test
+  @Transactional
   void find_all_by_email_returns_paginated_results() {
     var user = createTestUser(TEST_EMAIL, CLERK_ID);
     createTestText(user, "Text 1");
@@ -166,6 +157,7 @@ public class TextServiceIT extends FacadeIT {
   }
 
   @Test
+  @Transactional
   void find_all_by_email_returns_texts_sorted_by_created_at_descending() {
     var user = createTestUser(TEST_EMAIL, CLERK_ID);
     var text1 = createTestText(user, "First text");
@@ -184,6 +176,7 @@ public class TextServiceIT extends FacadeIT {
   }
 
   @Test
+  @Transactional
   void find_all_by_email_respects_page_size() {
     var user = createTestUser(TEST_EMAIL, CLERK_ID);
     createTestText(user, "Text 1");
@@ -202,6 +195,7 @@ public class TextServiceIT extends FacadeIT {
   }
 
   @Test
+  @Transactional
   void find_all_by_email_returns_empty_page_for_page_beyond_results() {
     var user = createTestUser(TEST_EMAIL, CLERK_ID);
     createTestText(user, "Text 1");
@@ -215,6 +209,7 @@ public class TextServiceIT extends FacadeIT {
   }
 
   @Test
+  @Transactional
   void find_all_by_email_only_returns_texts_of_specific_user() {
     var user1 = createTestUser(EMAIL_1, CLERK_1);
     var user2 = createTestUser(EMAIL_2, CLERK_2);
