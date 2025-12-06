@@ -1,5 +1,6 @@
 package dev.razafindratelo.misinformation.endpoint.rest.controller;
 
+import dev.razafindratelo.misinformation.model.Image;
 import dev.razafindratelo.misinformation.model.Video;
 import dev.razafindratelo.misinformation.service.MediaService;
 import jakarta.validation.constraints.Email;
@@ -25,9 +26,19 @@ public class MediaUploadController {
       @RequestParam("file") @NotNull MultipartFile file,
       @RequestParam("userEmail") @Email String userEmail) {
 
-    log.info("Video upload request received for user: {}", userEmail);
+    log.info("Video upload request received from user with email={}", userEmail);
 
     Video uploadedVideo = mediaService.uploadVideo(file, userEmail);
     return ResponseEntity.ok(uploadedVideo);
+  }
+
+  @PostMapping("/images/upload")
+  public Image uploadImage(
+      @RequestParam("file") @NotNull MultipartFile file,
+      @RequestParam("userEmail") @Email String userEmail) {
+
+    log.info("Image upload request received from user with email={}", userEmail);
+
+    return mediaService.uploadImage(file, userEmail);
   }
 }

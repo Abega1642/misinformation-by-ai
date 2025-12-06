@@ -50,6 +50,8 @@ public class SecurityConf {
                         "/v3/api-docs/**",
                         "/v3/api-docs.yaml")
                     .permitAll()
+                    .requestMatchers(POST, "/api/media/**")
+                    .permitAll()
                     .anyRequest()
                     .authenticated())
         .sessionManagement(

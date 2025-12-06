@@ -12,7 +12,7 @@ servers:
   - url: https://preprod-misinformation-by-ai-1.onrender.com
     description: Preprod server
   - url: https://misinformation-by-ai.onrender.com
-    description: Preprod server
+    description: Prod server
 
 
 tags:
@@ -274,6 +274,64 @@ paths:
                 error: "Bad Request"
                 message: "Video file is required and userEmail must be valid"
                 path: "/api/media/videos/upload"
+                errorCode: "BAD_FORM"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/InvalidClientCredentials"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/media/images/upload:
+    post:
+      operationId: uploadImage
+      tags:
+        - Image
+      summary: Upload an image file
+      description: >
+        Uploads an image file to the storage bucket.
+        **Bearer token authentication.**
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: userEmail
+          in: query
+          required: true
+          description: Email of the user uploading the image
+          schema:
+            $ref: "#/components/schemas/Email"
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Image file to upload
+              required:
+                - file
+      responses:
+        "200":
+          description: Image uploaded successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Image"
+        "400":
+          description: Invalid request - missing file or invalid email
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                timestamp: "2025-11-04T10:30:00Z"
+                status: 400
+                error: "Bad Request"
+                message: "Video file is required and userEmail must be valid"
+                path: "/api/media/images/upload"
                 errorCode: "BAD_FORM"
         "401":
           $ref: "#/components/responses/Unauthorized"
@@ -654,7 +712,6 @@ components:
         - error
         - message
         - path
-        -
     
     LoginRequest:
       type: object
@@ -702,18 +759,75 @@ components:
         user:
           $ref: "#/components/schemas/User"
 
-    Video:
+    ImageFormat:
+      type: string
+      enum: [ JPEG, PNG, GIF, BMP, TIFF, WEBP, RAW, SVG ]
+
+    Image:
+      allOf:
+        - $ref: "#/components/schemas/Media"
+        - type: object
+          required:
+            - width
+            - height
+            - format
+            - bitDepth
+            - colorModel
+          properties:
+            width:
+              type: integer
+              format: int32
+              description: Image width in pixels
+            height:
+              type: integer
+              format: int32
+              description: Image height in pixels
+            format:
+              $ref: "#/components/schemas/ImageFormat"
+            bitDepth:
+              type: integer
+              format: int32
+              description: Color depth in bits per pixel
+            colorModel:
+              type: string
+              enum: [ RGB, CMYK, Grayscale, LAB, HSV, Indexed ]
+              description: Color model/space used
+            dpi:
+              type: number
+              format: double
+              description: Dots per inch (resolution)
+            iso:
+              type: integer
+              format: int32
+              description: ISO sensitivity (for photos)
+
+    Media:
       type: object
+      discriminator:
+        propertyName: fileType
+      required:
+        - id
+        - fileName
+        - size
+        - sizeType
+        - fileType
+        - createdAt
+        - bucketKey
+        - owner
       properties:
         id:
           $ref: "#/components/schemas/UUID"
         fileName:
           type: string
+          description: Name of the media file
         size:
           type: number
           format: double
+          description: Size of the file in bytes
         sizeType:
           $ref: "#/components/schemas/SizeType"
+        fileType:
+          $ref: "#/components/schemas/FileType"
         createdAt:
           $ref: "#/components/schemas/Date"
         bucketKey:
@@ -721,36 +835,55 @@ components:
           description: Path to the file in storage
         owner:
           $ref: "#/components/schemas/User"
-        duration:
-          type: number
-          format: double
-          description: Video duration in seconds
-        codec:
-          $ref: "#/components/schemas/Codec"
-        width:
-          type: integer
-          format: int32
-        height:
-          type: integer
-          format: int32
-        frameRate:
-          type: number
-          format: double
-        aspectRatio:
-          type: string
-        containerFormat:
-          $ref: "#/components/schemas/ContainerFormat"
-        bitRate:
-          type: number
-          format: double
-        audioCodec:
-          $ref: "#/components/schemas/AudioCodec"
-        audioChannels:
-          type: integer
-          format: int32
-        audioSampleRate:
-          type: integer
-          format: int32
+
+    Video:
+      allOf:
+        - $ref: "#/components/schemas/Media"
+        - type: object
+          required:
+            - duration
+            - codec
+            - width
+            - height
+            - containerFormat
+          properties:
+            duration:
+              type: number
+              format: double
+              description: Video duration in seconds
+            codec:
+              $ref: "#/components/schemas/Codec"
+            width:
+              type: integer
+              format: int32
+              description: Video width in pixels
+            height:
+              type: integer
+              format: int32
+              description: Video height in pixels
+            frameRate:
+              type: number
+              format: double
+              description: Frames per second
+            aspectRatio:
+              type: string
+              description: Display aspect ratio (e.g., "16:9", "4:3")
+            containerFormat:
+              $ref: "#/components/schemas/ContainerFormat"
+            bitRate:
+              type: number
+              format: double
+              description: Bit rate in bits per second
+            audioCodec:
+              $ref: "#/components/schemas/AudioCodec"
+            audioChannels:
+              type: integer
+              format: int32
+              description: Number of audio channels
+            audioSampleRate:
+              type: integer
+              format: int32
+              description: Audio sample rate in Hz
 
 security:
   - BearerAuth: [ ]

@@ -21,6 +21,6 @@ public class Media {
   private SizeType sizeType;
   private FileType fileType;
   private LocalDateTime createdAt;
-  private String filePath;
+  private String bucketKey;
   private User owner;
 }
