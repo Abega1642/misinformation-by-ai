@@ -1,18 +1,23 @@
 package dev.razafindratelo.misinformation.service;
 
+import static dev.razafindratelo.misinformation.model.classifier.FileType.AUDIO;
 import static dev.razafindratelo.misinformation.model.classifier.FileType.IMAGE;
 import static dev.razafindratelo.misinformation.model.classifier.FileType.VIDEO;
 import static java.util.UUID.randomUUID;
 
 import dev.razafindratelo.misinformation.exception.MediaUploadException;
 import dev.razafindratelo.misinformation.file.BucketComponent;
+import dev.razafindratelo.misinformation.mapper.AudioMapper;
 import dev.razafindratelo.misinformation.mapper.ImageMapper;
 import dev.razafindratelo.misinformation.mapper.VideoMapper;
+import dev.razafindratelo.misinformation.model.Audio;
 import dev.razafindratelo.misinformation.model.Image;
 import dev.razafindratelo.misinformation.model.Video;
 import dev.razafindratelo.misinformation.model.classifier.FileType.*;
+import dev.razafindratelo.misinformation.repository.AudioRepository;
 import dev.razafindratelo.misinformation.repository.ImageRepository;
 import dev.razafindratelo.misinformation.repository.VideoRepository;
+import dev.razafindratelo.misinformation.service.media.AudioMetaDataExtractor;
 import dev.razafindratelo.misinformation.service.media.ImageMetaDataExtractor;
 import dev.razafindratelo.misinformation.service.media.MultipartFileConverter;
 import dev.razafindratelo.misinformation.service.media.ValidMediaType;
@@ -34,12 +39,15 @@ public class MediaService {
   private final BucketComponent bucket;
   private final VideoMetaDataExtractor videoExtractor;
   private final ImageMetaDataExtractor imageExtractor;
+  private final AudioMetaDataExtractor audioMetaDataExtractor;
   private final VideoRepository videoRepository;
   private final ImageRepository imageRepository;
   private final ImageMapper imageMapper;
   private final UserService userService;
   private final MultipartFileConverter fileConverter;
   private final VideoMapper videoMapper;
+  private final AudioMapper audioMapper;
+  private final AudioRepository audioRepository;
 
   public Video uploadVideo(
       @ValidMediaType(VIDEO) @NotNull MultipartFile file, @NotNull @Email String userEmail) {
@@ -70,6 +78,38 @@ public class MediaService {
     } catch (IOException e) {
       log.error("Failed to upload video for owner: {}", userEmail, e);
       throw new MediaUploadException("Failed to upload video : " + e);
+    }
+  }
+
+  public Audio uploadAudio(
+      @ValidMediaType(AUDIO) @NotNull MultipartFile file, @NotNull @Email String userEmail) {
+    var owner = userService.findByEmail(userEmail);
+    try {
+      var videoFile = fileConverter.convert(file);
+      var audio = audioMetaDataExtractor.apply(videoFile);
+      audio.setOwner(owner);
+
+      String bucketKey = generateBucketKey("audios");
+
+      log.info(
+          "Uploading audio: id={}, name={}, duration={}, bucketKey={}, owner={}",
+          audio.getId(),
+          audio.getFileName(),
+          audio.getDuration(),
+          bucketKey,
+          userEmail);
+
+      bucket.upload(videoFile, bucketKey);
+      audio.setBucketKey(bucketKey);
+
+      log.info("Audio uploaded successfully. Pre-signed URL generated for id={}", audio.getId());
+
+      audioRepository.save(audioMapper.toPersistenceModel(audio));
+
+      return audio;
+    } catch (IOException e) {
+      log.error("Failed to upload audio for owner: {}", userEmail, e);
+      throw new MediaUploadException("Failed to upload audio : " + e);
     }
   }
 

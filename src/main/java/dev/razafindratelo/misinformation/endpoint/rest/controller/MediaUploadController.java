@@ -1,5 +1,6 @@
 package dev.razafindratelo.misinformation.endpoint.rest.controller;
 
+import dev.razafindratelo.misinformation.model.Audio;
 import dev.razafindratelo.misinformation.model.Image;
 import dev.razafindratelo.misinformation.model.Video;
 import dev.razafindratelo.misinformation.service.MediaService;
@@ -40,5 +41,15 @@ public class MediaUploadController {
     log.info("Image upload request received from owner with email={}", userEmail);
 
     return mediaService.uploadImage(file, userEmail);
+  }
+
+  @PostMapping("/audios/upload")
+  public Audio uploadAudio(
+      @RequestParam("file") @NotNull MultipartFile file,
+      @RequestParam("userEmail") @Email String userEmail) {
+
+    log.info("Audio upload request received from owner with email={}", userEmail);
+
+    return mediaService.uploadAudio(file, userEmail);
   }
 }
