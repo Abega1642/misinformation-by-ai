@@ -35,17 +35,27 @@ public class TokenService {
     return tokenMapper.toCoreModel(savedToken);
   }
 
-  public boolean isValid(@NotNull @NotBlank String tokenValue, String email) {
+  public Token findTokenByValue(@NotNull @NotBlank String value) {
+    var token =
+        tokenRepository
+            .findByToken(value)
+            .orElseThrow(() -> new EntityNotFoundException("No Token of value " + value));
+    log.info("Requesting token value with value={}", token.getToken());
+
+    return tokenMapper.toCoreModel(token);
+  }
+
+  public boolean isValid(@NotNull @NotBlank String tokenValue) {
     var token =
         tokenRepository
             .findByToken(tokenValue)
             .orElseThrow(() -> new EntityNotFoundException("No Token of value " + tokenValue));
-    var owner = userService.findByClerkId(email);
+    var owner = token.getOwner();
 
     log.info(
         "Checking if token is valid for token={} and userEmail={}",
         token.getToken(),
-        owner.email());
+        owner.getEmail());
 
     return token.getExpirationDate().isAfter(now());
   }

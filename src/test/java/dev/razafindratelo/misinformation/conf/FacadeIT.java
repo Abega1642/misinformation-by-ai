@@ -13,7 +13,7 @@ import org.springframework.test.context.DynamicPropertySource;
 
 @InfraGenerated
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@AutoConfigureMockMvc
+@AutoConfigureMockMvc(addFilters = false)
 @Slf4j
 public abstract class FacadeIT {
 
