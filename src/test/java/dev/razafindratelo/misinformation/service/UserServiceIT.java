@@ -1,7 +1,11 @@
 package dev.razafindratelo.misinformation.service;
 
 import static java.util.UUID.randomUUID;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import dev.razafindratelo.misinformation.conf.FacadeIT;
 import dev.razafindratelo.misinformation.endpoint.rest.controller.model.UserRequest;
