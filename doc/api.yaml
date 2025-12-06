@@ -9,8 +9,11 @@ info:
     url: https://github.com/Abega1642
 
 servers:
-  - url: https://arsmedia.onrender.com
-    description: Production server
+  - url: https://preprod-misinformation-by-ai-1.onrender.com
+    description: Preprod server
+  - url: https://misinformation-by-ai.onrender.com
+    description: Preprod server
+
 
 tags:
   - name: Health
