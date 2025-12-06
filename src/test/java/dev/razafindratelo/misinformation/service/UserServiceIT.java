@@ -13,6 +13,7 @@ import dev.razafindratelo.misinformation.mapper.UserMapper;
 import dev.razafindratelo.misinformation.model.User;
 import dev.razafindratelo.misinformation.repository.UserRepository;
 import dev.razafindratelo.misinformation.service.util.Paginator;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ConstraintViolationException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -208,6 +209,70 @@ public class UserServiceIT extends FacadeIT {
     assertNotNull(result2);
     assertNotEquals(result1.id(), result2.id());
     assertEquals(2, userRepository.count());
+  }
+
+  @Test
+  void find_by_email_with_existing_email_succeeds() {
+    var request = new UserRequest(TEST_EMAIL, TEST_FULL_NAME, CLERK_ID);
+    var registeredUser = userService.registerUser(request);
+
+    var result = userService.findByEmail(TEST_EMAIL);
+
+    assertNotNull(result);
+    assertEquals(registeredUser.id(), result.id());
+    assertEquals(TEST_EMAIL, result.email());
+    assertEquals(CLERK_ID, result.clerkId());
+  }
+
+  @Test
+  void find_by_email_with_nonexistent_email_throws_entity_not_found_exception() {
+    assertThrows(
+        EntityNotFoundException.class, () -> userService.findByEmail("nonexistent@example.com"));
+  }
+
+  @Test
+  void find_by_email_with_null_email_throws_validation_exception() {
+    assertThrows(ConstraintViolationException.class, () -> userService.findByEmail(null));
+  }
+
+  @Test
+  void find_by_email_with_blank_email_throws_validation_exception() {
+    assertThrows(ConstraintViolationException.class, () -> userService.findByEmail("   "));
+  }
+
+  @Test
+  void find_by_email_with_invalid_email_format_throws_validation_exception() {
+    assertThrows(
+        ConstraintViolationException.class, () -> userService.findByEmail("invalid-email"));
+  }
+
+  @Test
+  void find_by_clerk_id_with_existing_clerk_id_succeeds() {
+    var request = new UserRequest(TEST_EMAIL, TEST_FULL_NAME, CLERK_ID);
+    var registeredUser = userService.registerUser(request);
+
+    var result = userService.findByClerkId(CLERK_ID);
+
+    assertNotNull(result);
+    assertEquals(registeredUser.id(), result.id());
+    assertEquals(TEST_EMAIL, result.email());
+    assertEquals(CLERK_ID, result.clerkId());
+  }
+
+  @Test
+  void find_by_clerk_id_with_nonexistent_clerk_id_throws_entity_not_found_exception() {
+    assertThrows(
+        EntityNotFoundException.class, () -> userService.findByClerkId("nonexistent-clerk-id"));
+  }
+
+  @Test
+  void find_by_clerk_id_with_null_clerk_id_throws_validation_exception() {
+    assertThrows(ConstraintViolationException.class, () -> userService.findByClerkId(null));
+  }
+
+  @Test
+  void find_by_clerk_id_with_blank_clerk_id_throws_validation_exception() {
+    assertThrows(ConstraintViolationException.class, () -> userService.findByClerkId("   "));
   }
 
   private User createTestUser(String email, String clerkId) {

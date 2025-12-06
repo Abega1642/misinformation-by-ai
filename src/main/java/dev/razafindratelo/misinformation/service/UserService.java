@@ -85,16 +85,6 @@ public class UserService {
     return userMapper.toCoreModel(userRepository.save(newUser));
   }
 
-  public User findUserByEmail(@Email @NotNull @NotBlank String email) {
-    var jUser =
-        userRepository
-            .findByEmail(email)
-            .orElseThrow(
-                () -> new EntityNotFoundException(format("No owner with email=%s.", email)));
-
-    return userMapper.toCoreModel(jUser);
-  }
-
   public Page<User> getAllUsers(Integer page, Integer size) {
     log.info("Requesting for al users with page={} and size={}", page, size);
     var pagination = paginator.apply(page, size);
