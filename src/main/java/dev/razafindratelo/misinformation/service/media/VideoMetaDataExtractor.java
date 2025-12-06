@@ -11,7 +11,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.time.LocalDateTime;
 import java.util.UUID;
-import lombok.RequiredArgsConstructor;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.bramp.ffmpeg.FFprobe;
 import net.bramp.ffmpeg.probe.FFmpegProbeResult;
@@ -19,10 +19,10 @@ import net.bramp.ffmpeg.probe.FFmpegStream;
 import org.springframework.stereotype.Component;
 
 @Component
-@RequiredArgsConstructor
+@AllArgsConstructor
 @Slf4j
 public class VideoMetaDataExtractor implements MediaMetadataExtractor<Video> {
-  private final FFprobe ffprobe;
+  private FFprobe ffprobe;
 
   @Override
   public Video apply(File file) {

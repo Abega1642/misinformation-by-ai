@@ -14,8 +14,13 @@ import static org.mockito.Mockito.when;
 
 import dev.razafindratelo.misinformation.exception.MediaUploadException;
 import dev.razafindratelo.misinformation.file.BucketComponent;
+import dev.razafindratelo.misinformation.mapper.VideoMapper;
 import dev.razafindratelo.misinformation.model.User;
 import dev.razafindratelo.misinformation.model.Video;
+import dev.razafindratelo.misinformation.model.classifier.ContainerFormat;
+import dev.razafindratelo.misinformation.model.classifier.FileType;
+import dev.razafindratelo.misinformation.model.classifier.SizeType;
+import dev.razafindratelo.misinformation.model.classifier.VideoCodec;
 import dev.razafindratelo.misinformation.repository.VideoRepository;
 import dev.razafindratelo.misinformation.repository.model.JVideo;
 import dev.razafindratelo.misinformation.service.media.MultipartFileConverter;
@@ -36,9 +41,6 @@ import org.springframework.web.multipart.MultipartFile;
 class MediaServiceIT {
 
   private static final String TEST_EMAIL = "rakoto@gmail.com";
-  private static final String VIDEO_ID = "video-123";
-  private static final String VIDEO_FILENAME = "test-video.webm";
-  private static final Long VIDEO_DURATION = 120L;
   private static final String VIDEO_PREFIX = "videos/";
   private static final String FAILED_TO_UPLOAD_VIDEO_MESSAGE = "Failed to upload video";
 
@@ -47,6 +49,7 @@ class MediaServiceIT {
   @Mock private VideoRepository videoRepository;
   @Mock private UserService userService;
   @Mock private MultipartFileConverter fileConverter;
+  @Mock private VideoMapper videoMapper;
   @InjectMocks private MediaService mediaService;
 
   @Test
@@ -54,11 +57,13 @@ class MediaServiceIT {
     var multipartFile = mock(MultipartFile.class);
     var videoFile = mock(File.class);
     var activeUser = createActiveUser();
-    var video = createTestVideo();
+    var video = createTestVideo(videoFile);
+    var jVideo = mock(JVideo.class);
 
     when(userService.findByEmail(TEST_EMAIL)).thenReturn(activeUser);
     when(fileConverter.convert(multipartFile)).thenReturn(videoFile);
     when(videoExtractor.apply(videoFile)).thenReturn(video);
+    when(videoMapper.toPersistenceModel(any(Video.class))).thenReturn(jVideo);
 
     var result = mediaService.uploadVideo(multipartFile, TEST_EMAIL);
 
@@ -71,7 +76,8 @@ class MediaServiceIT {
     verify(fileConverter).convert(multipartFile);
     verify(videoExtractor).apply(videoFile);
     verify(bucket).upload(eq(videoFile), startsWith(VIDEO_PREFIX));
-    verify(videoRepository).save(any());
+    verify(videoMapper).toPersistenceModel(any(Video.class));
+    verify(videoRepository).save(jVideo);
   }
 
   @Test
@@ -79,11 +85,13 @@ class MediaServiceIT {
     var multipartFile = mock(MultipartFile.class);
     var videoFile = mock(File.class);
     var activeUser = createActiveUser();
-    var video = createTestVideo();
+    var video = createTestVideo(videoFile);
+    var jVideo = mock(JVideo.class);
 
     when(userService.findByEmail(TEST_EMAIL)).thenReturn(activeUser);
     when(fileConverter.convert(multipartFile)).thenReturn(videoFile);
     when(videoExtractor.apply(videoFile)).thenReturn(video);
+    when(videoMapper.toPersistenceModel(any(Video.class))).thenReturn(jVideo);
 
     var result = mediaService.uploadVideo(multipartFile, TEST_EMAIL);
 
@@ -105,6 +113,7 @@ class MediaServiceIT {
         .hasMessageContaining(FAILED_TO_UPLOAD_VIDEO_MESSAGE);
 
     verify(bucket, never()).upload(any(), any());
+    verify(videoMapper, never()).toPersistenceModel(any());
     verify(videoRepository, never()).save(any());
   }
 
@@ -115,14 +124,16 @@ class MediaServiceIT {
     var videoFile1 = mock(File.class);
     var videoFile2 = mock(File.class);
     var activeUser = createActiveUser();
-    var video1 = createTestVideo();
-    var video2 = createTestVideo();
+    var video1 = createTestVideo(videoFile1);
+    var video2 = createTestVideo(videoFile2);
+    var jVideo = mock(JVideo.class);
 
     when(userService.findByEmail(TEST_EMAIL)).thenReturn(activeUser);
     when(fileConverter.convert(multipartFile1)).thenReturn(videoFile1);
     when(fileConverter.convert(multipartFile2)).thenReturn(videoFile2);
     when(videoExtractor.apply(videoFile1)).thenReturn(video1);
     when(videoExtractor.apply(videoFile2)).thenReturn(video2);
+    when(videoMapper.toPersistenceModel(any(Video.class))).thenReturn(jVideo);
 
     Video result1 = mediaService.uploadVideo(multipartFile1, TEST_EMAIL);
     Video result2 = mediaService.uploadVideo(multipartFile2, TEST_EMAIL);
@@ -137,11 +148,13 @@ class MediaServiceIT {
     var multipartFile = mock(MultipartFile.class);
     var videoFile = mock(File.class);
     var activeUser = createActiveUser();
-    var video = createTestVideo();
+    var video = createTestVideo(videoFile);
+    var jVideo = mock(JVideo.class);
 
     when(userService.findByEmail(TEST_EMAIL)).thenReturn(activeUser);
     when(fileConverter.convert(multipartFile)).thenReturn(videoFile);
     when(videoExtractor.apply(videoFile)).thenReturn(video);
+    when(videoMapper.toPersistenceModel(any(Video.class))).thenReturn(jVideo);
 
     mediaService.uploadVideo(multipartFile, TEST_EMAIL);
 
@@ -150,6 +163,7 @@ class MediaServiceIT {
 
     var savedVideo = captor.getValue();
     assertThat(savedVideo).isNotNull();
+    assertThat(savedVideo).isEqualTo(jVideo);
   }
 
   private User createActiveUser() {
@@ -157,11 +171,20 @@ class MediaServiceIT {
         randomUUID().toString(), TEST_EMAIL, "random-full-name", randomUUID().toString(), now());
   }
 
-  private Video createTestVideo() {
-    Video video = new Video();
-    video.setId(VIDEO_ID);
-    video.setFileName(VIDEO_FILENAME);
-    video.setDuration(VIDEO_DURATION);
-    return video;
+  private Video createTestVideo(File file) {
+    return Video.builder()
+        .id(randomUUID().toString())
+        .fileName(file.getName())
+        .fileType(FileType.VIDEO)
+        .size(file.length())
+        .sizeType(SizeType.BYTES)
+        .createdAt(now())
+        .duration(120.0)
+        .width(1920)
+        .height(1080)
+        .frameRate(30.0)
+        .codec(VideoCodec.H264)
+        .containerFormat(ContainerFormat.WEBM)
+        .build();
   }
 }

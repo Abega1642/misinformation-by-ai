@@ -24,7 +24,8 @@ class VideoMetaDataExtractorTest {
   @BeforeEach
   void setUp() throws IOException {
     try {
-      subject = new VideoMetaDataExtractor(new FFprobe("/usr/bin/ffprobe"));
+      var ffprob = new FFprobe("/usr/bin/ffprobe");
+      subject = new VideoMetaDataExtractor(ffprob);
     } catch (IOException e) {
       throw new IOException(e);
     }

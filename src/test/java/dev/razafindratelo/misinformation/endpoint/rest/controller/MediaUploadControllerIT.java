@@ -1,4 +1,4 @@
-package dev.razafindratelo.misinformation.service;
+package dev.razafindratelo.misinformation.endpoint.rest.controller;
 
 import static java.util.UUID.randomUUID;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -15,6 +15,7 @@ import dev.razafindratelo.misinformation.model.classifier.FileType;
 import dev.razafindratelo.misinformation.model.classifier.SizeType;
 import dev.razafindratelo.misinformation.model.classifier.VideoCodec;
 import dev.razafindratelo.misinformation.repository.VideoRepository;
+import dev.razafindratelo.misinformation.service.UserService;
 import dev.razafindratelo.misinformation.service.media.VideoMetaDataExtractor;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
