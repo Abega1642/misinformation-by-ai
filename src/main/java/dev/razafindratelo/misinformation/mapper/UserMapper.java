@@ -10,10 +10,15 @@ import org.springframework.stereotype.Component;
 public class UserMapper {
 
   public User toCoreModel(JUser jUser) {
-    return new User(jUser.getId(), jUser.getEmail(), jUser.getClerkId(), jUser.getCreatedAt());
+    return new User(
+        jUser.getId(),
+        jUser.getEmail(),
+        jUser.getFullName(),
+        jUser.getClerkId(),
+        jUser.getCreatedAt());
   }
 
   public JUser toPersistenceModel(User user) {
-    return new JUser(user.id(), user.email(), user.clerkId(), user.createdAt());
+    return new JUser(user.id(), user.email(), user.fullName(), user.clerkId(), user.createdAt());
   }
 }

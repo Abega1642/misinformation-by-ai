@@ -26,6 +26,9 @@ public class JUser {
   @Column(nullable = false)
   private String email;
 
+  @Column(name = "full_name")
+  private String fullName;
+
   @Column(name = "clerk_id", nullable = false)
   private String clerkId;
 

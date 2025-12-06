@@ -16,6 +16,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -25,6 +26,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 @Service
+@Slf4j
 @Validated
 @RequiredArgsConstructor
 public class UserService {
@@ -40,6 +42,8 @@ public class UserService {
                 () ->
                     new AuthorizationDeniedException(
                         format("Authorization denied from email=%s", email)));
+    log.info(
+        "Authenticate user with email={} and clerk_id={}", jUser.getEmail(), jUser.getClerkId());
 
     return userMapper.toCoreModel(jUser);
   }
@@ -47,7 +51,14 @@ public class UserService {
   public User registerUser(@Valid @NotNull UserRequest userRequest) {
     var id = randomUUID().toString();
     var createdAt = now();
-    var newUser = new JUser(id, userRequest.email(), userRequest.clerkId(), createdAt);
+    var newUser =
+        new JUser(
+            id, userRequest.email(), userRequest.fullName(), userRequest.clerkId(), createdAt);
+    log.info(
+        "Request creating user with email={}, clerk_id={} and full_name={}",
+        newUser.getEmail(),
+        newUser.getClerkId(),
+        newUser.getFullName());
 
     return userMapper.toCoreModel(userRepository.save(newUser));
   }
@@ -63,6 +74,7 @@ public class UserService {
   }
 
   public Page<User> getAllUsers(Integer page, Integer size) {
+    log.info("Requesting for al users with page={} and size={}", page, size);
     var pagination = paginator.apply(page, size);
 
     Pageable pageable =

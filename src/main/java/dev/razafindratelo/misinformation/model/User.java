@@ -8,5 +8,6 @@ import java.time.LocalDateTime;
 public record User(
     @NotNull @NotBlank String id,
     @Email @NotBlank @NotNull String email,
+    @NotNull @NotBlank String fullName,
     @NotNull @NotBlank String clerkId,
     LocalDateTime createdAt) {}

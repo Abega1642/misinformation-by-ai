@@ -1,7 +1,7 @@
 openapi: "3.1.0"
 info:
-  title: Arsmedia Backend API
-  description:
+  title: Misinformation Backend API
+  description: Check your Video, Image and Text authenticity
   version: "1.0.0"
   contact:
     name: Abegà Razafindratelo
@@ -191,17 +191,13 @@ paths:
         - Authentication
       summary: User login
       description: >
-        Authenticates a user with email and password. Returns user information.
-        Requires client credentials for non-local requests. After login, use /auth/token/token-pairs to get JWT tokens.
-      security:
-        - ClientSecret: [ ]
-          ClientId: [ ]
+        Authenticates a user with email and clerkId. Returns user information.
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UserCreateRequest"
+              $ref: "#/components/schemas/LoginRequest"
       responses:
         "200":
           description: Login successful - user authenticated
@@ -237,7 +233,7 @@ paths:
         Uploads a video file to the storage bucket.
         **Requires client credentials and Bearer token authentication.**
       security:
-        BearerAuth: [ ]
+        - BearerAuth: [ ]
       parameters:
         - name: userEmail
           in: query
@@ -658,6 +654,16 @@ components:
         - error
         - message
         - path
+        -
+    
+    LoginRequest:
+      type: object
+      required: [ email, clerk_id ]
+      properties:
+        email:
+          $ref: "#/components/schemas/Email"
+        clerk_id:
+          $ref: "#/components/schemas/UUID"
 
 
     UserCreateRequest:

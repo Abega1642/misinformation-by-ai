@@ -19,6 +19,7 @@ import org.springframework.data.domain.Page;
 public class UserServiceIT extends FacadeIT {
 
   private static final String TEST_EMAIL = "test@example.com";
+  private static final String TEST_FULL_NAME = "test full name";
   private static final String MAIL_1 = "user1@example.com";
   private static final String MAIL_2 = "user2@example.com";
   private static final String CLERK_1 = randomUUID().toString();
@@ -43,7 +44,7 @@ public class UserServiceIT extends FacadeIT {
 
   @Test
   void register_user_with_valid_data_succeeds() {
-    var request = new UserRequest(TEST_EMAIL, CLERK_ID);
+    var request = new UserRequest(TEST_EMAIL, TEST_FULL_NAME, CLERK_ID);
 
     var result = userService.registerUser(request);
 
@@ -59,7 +60,7 @@ public class UserServiceIT extends FacadeIT {
 
   @Test
   void register_user_with_null_email_throws_validation_exception() {
-    var request = new UserRequest(null, CLERK_ID);
+    var request = new UserRequest(null, TEST_FULL_NAME, CLERK_ID);
 
     assertThrows(
         ConstraintViolationException.class,
@@ -70,7 +71,7 @@ public class UserServiceIT extends FacadeIT {
 
   @Test
   void register_user_with_blank_email_throws_validation_exception() {
-    var request = new UserRequest("   ", CLERK_ID);
+    var request = new UserRequest("   ", TEST_FULL_NAME, CLERK_ID);
 
     assertThrows(
         ConstraintViolationException.class,
@@ -81,7 +82,7 @@ public class UserServiceIT extends FacadeIT {
 
   @Test
   void register_user_with_invalid_email_format_throws_validation_exception() {
-    var request = new UserRequest("invalid-email", CLERK_ID);
+    var request = new UserRequest("invalid-email", TEST_FULL_NAME, CLERK_ID);
 
     assertThrows(
         ConstraintViolationException.class,
@@ -92,7 +93,7 @@ public class UserServiceIT extends FacadeIT {
 
   @Test
   void register_user_with_null_clerk_id_throws_validation_exception() {
-    var request = new UserRequest(TEST_EMAIL, null);
+    var request = new UserRequest(TEST_EMAIL, TEST_FULL_NAME, null);
 
     assertThrows(
         ConstraintViolationException.class,
@@ -103,7 +104,7 @@ public class UserServiceIT extends FacadeIT {
 
   @Test
   void register_user_with_blank_clerk_id_throws_validation_exception() {
-    var request = new UserRequest(TEST_EMAIL, "   ");
+    var request = new UserRequest(TEST_EMAIL, TEST_FULL_NAME, "   ");
 
     assertThrows(
         ConstraintViolationException.class,
@@ -193,8 +194,8 @@ public class UserServiceIT extends FacadeIT {
 
   @Test
   void register_multiple_users_with_unique_emails_succeeds() {
-    var request1 = new UserRequest(MAIL_1, CLERK_1);
-    var request2 = new UserRequest(MAIL_2, CLERK_2);
+    var request1 = new UserRequest(MAIL_1, TEST_FULL_NAME, CLERK_1);
+    var request2 = new UserRequest(MAIL_2, TEST_FULL_NAME, CLERK_2);
 
     var result1 = userService.registerUser(request1);
     var result2 = userService.registerUser(request2);
@@ -206,7 +207,7 @@ public class UserServiceIT extends FacadeIT {
   }
 
   private User createTestUser(String email, String clerkId) {
-    var request = new UserRequest(email, clerkId);
+    var request = new UserRequest(email, TEST_FULL_NAME, clerkId);
     return userService.registerUser(request);
   }
 

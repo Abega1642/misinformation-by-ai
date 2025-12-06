@@ -24,6 +24,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 public class UserControllerIT extends FacadeIT {
 
+  private static final String TEST_FULL_NAME = "test full name";
   private static final String TEST_EMAIL = "test@example.com";
   private static final String CLERK_ID = randomUUID().toString();
   private static final String USERS_SIGN_UP_ENDPOINT = "/users/sign-up";
@@ -53,7 +54,7 @@ public class UserControllerIT extends FacadeIT {
 
   @Test
   void register_user_with_valid_data_returns_200_and_user() throws Exception {
-    var userRequest = new UserRequest(TEST_EMAIL, CLERK_ID);
+    var userRequest = new UserRequest(TEST_EMAIL, TEST_EMAIL, CLERK_ID);
     var request = generateRequest(userRequest);
 
     var response =
@@ -74,7 +75,7 @@ public class UserControllerIT extends FacadeIT {
 
   @Test
   void register_user_with_null_email_returns_400() throws Exception {
-    var userRequest = new UserRequest(null, CLERK_ID);
+    var userRequest = new UserRequest(null, TEST_EMAIL, CLERK_ID);
     var request = generateRequest(userRequest);
 
     mockMvc
@@ -86,7 +87,7 @@ public class UserControllerIT extends FacadeIT {
 
   @Test
   void register_user_with_blank_email_returns_400() throws Exception {
-    var userRequest = new UserRequest("   ", CLERK_ID);
+    var userRequest = new UserRequest("   ", TEST_EMAIL, CLERK_ID);
     var request = generateRequest(userRequest);
 
     mockMvc
@@ -98,7 +99,7 @@ public class UserControllerIT extends FacadeIT {
 
   @Test
   void register_user_with_invalid_email_format_returns_400() throws Exception {
-    var userRequest = new UserRequest("invalid-email", CLERK_ID);
+    var userRequest = new UserRequest("invalid-email", TEST_EMAIL, CLERK_ID);
     var request = generateRequest(userRequest);
 
     mockMvc
@@ -110,7 +111,7 @@ public class UserControllerIT extends FacadeIT {
 
   @Test
   void register_user_with_null_clerk_id_returns_400() throws Exception {
-    var userRequest = new UserRequest(TEST_EMAIL, null);
+    var userRequest = new UserRequest(TEST_EMAIL, TEST_EMAIL, null);
     var request = generateRequest(userRequest);
 
     mockMvc
@@ -122,7 +123,7 @@ public class UserControllerIT extends FacadeIT {
 
   @Test
   void register_user_with_blank_clerk_id_returns_400() throws Exception {
-    var request = new UserRequest(TEST_EMAIL, "   ");
+    var request = new UserRequest(TEST_EMAIL, TEST_EMAIL, "   ");
 
     mockMvc
         .perform(
@@ -260,7 +261,7 @@ public class UserControllerIT extends FacadeIT {
   }
 
   private User createTestUser(String email, String clerkId) {
-    var request = new UserRequest(email, clerkId);
+    var request = new UserRequest(email, TEST_EMAIL, clerkId);
     return userService.registerUser(request);
   }
 
