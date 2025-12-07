@@ -56,6 +56,8 @@ public class SecurityConf {
                     .permitAll()
                     .requestMatchers(POST, "/auth/login")
                     .permitAll()
+                    .requestMatchers(POST, "/api/**")
+                    .permitAll()
                     .requestMatchers(
                         "/",
                         "/doc",
