@@ -43,6 +43,103 @@ paths:
                 type: string
                 example: /doc
 
+  /api/videos/check:
+    post:
+      tags:
+        - Detections
+      summary: Submit a video for AI-generated content detection
+      description: >
+        Generates a presigned URL from the given S3 bucket key and submits
+        the video to Sightengine's `/video/check.json` endpoint. Results are
+        posted asynchronously to the provided callback URL.
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                bucketKey:
+                  type: string
+                  description: S3 object key of the video to analyze
+                  example: users/john.doe/videos/video123.mp4
+                callbackUrl:
+                  type: string
+                  format: uri
+                  description: Public URL where Sightengine will POST results
+                  example: https://yourapp.com/api/videos/callback
+              required:
+                - bucketKey
+                - callbackUrl
+      responses:
+        '200':
+          description: Request successfully submitted to Sightengine
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    description: Submission status
+                    example: success
+                  request_id:
+                    type: string
+                    description: Sightengine request identifier
+                    example: req_123456789
+        '400':
+          description: Invalid input (missing bucketKey or callbackUrl)
+        '500':
+          description: Internal server error during presigned URL generation or API call
+
+  /api/videos/callback:
+    post:
+      tags:
+        - Detections
+      summary: Receive analysis results from Sightengine
+      description: >
+        Endpoint that Sightengine calls with the analysis results once
+        processing is complete. The payload contains detection data.
+      operationId: videoCallback
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  description: Processing status
+                  example: success
+                request:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      description: Sightengine request ID
+                      example: req_123456789
+                data:
+                  type: object
+                  properties:
+                    genai:
+                      type: object
+                      properties:
+                        fake:
+                          type: boolean
+                          description: Whether the video is AI-generated
+                          example: true
+                        score:
+                          type: number
+                          format: float
+                          description: Confidence score (0–1)
+                          example: 0.92
+      responses:
+        '200':
+          description: Callback successfully processed
+        '400':
+          description: Invalid payload
+
   /ping:
     get:
       operationId: pong
