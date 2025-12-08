@@ -29,6 +29,9 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.security:spring-security-crypto'
+    implementation 'org.bouncycastle:bcprov-jdk18on:1.83'
+
     implementation 'org.flywaydb:flyway-core'
     implementation 'org.flywaydb:flyway-database-postgresql'
 
@@ -37,15 +40,15 @@ dependencies {
     testCompileOnly 'org.projectlombok:lombok'
     testAnnotationProcessor 'org.projectlombok:lombok'
 
-    implementation 'org.apache.httpcomponents:httpclient:4.5.14'
-    implementation 'org.apache.httpcomponents.client5:httpclient5:5.2.1'
-    implementation 'org.apache.httpcomponents.client5:httpmime5:5.2.1'
+    implementation 'org.mapstruct:mapstruct:1.6.3'
+    annotationProcessor 'org.mapstruct:mapstruct-processor:1.6.3'
+    testAnnotationProcessor 'org.mapstruct:mapstruct-processor:1.6.3'
+    annotationProcessor 'org.projectlombok:lombok-mapstruct-binding:0.2.0'
+
+    implementation 'com.stripe:stripe-java:31.0.0'
 
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.13'
     implementation 'net.bramp.ffmpeg:ffmpeg:0.8.0'
-
-    implementation 'com.resend:resend-java:4.6.0'
-    implementation 'org.apache.tika:tika-core:3.2.3'
 
     implementation 'software.amazon.awssdk:s3:2.21.40'
     implementation 'software.amazon.awssdk:s3-transfer-manager:2.21.40'
@@ -60,10 +63,12 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-testcontainers'
     testImplementation 'org.springframework.amqp:spring-rabbit-test'
     testImplementation 'org.springframework.security:spring-security-test'
+
     testImplementation 'org.testcontainers:junit-jupiter'
     testImplementation 'org.testcontainers:postgresql'
     testImplementation 'org.testcontainers:rabbitmq'
-    testImplementation 'org.testcontainers:localstack:1.21.3'
+    testImplementation 'org.testcontainers:localstack'
+
     testImplementation 'org.wiremock:wiremock-standalone:3.13.1'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     testImplementation 'com.icegreen:greenmail:2.0.1'
@@ -73,6 +78,11 @@ dependencies {
 
 tasks.named('test') {
     useJUnitPlatform()
+
+    systemProperty "testcontainers.reuse.enable", "true"
+    systemProperty "testcontainers.cleanup.enabled", "true"
+    systemProperty "testcontainers.checks.disable", "true"
+
 
     jvmArgs(
             '-XX:+EnableDynamicAgentLoading',

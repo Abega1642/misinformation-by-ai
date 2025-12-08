@@ -77,9 +77,7 @@ public class TokenFilter extends OncePerRequestFilter {
     var path = request.getServletPath();
     var method = request.getMethod();
 
-    if ("OPTIONS".equalsIgnoreCase(method)) {
-      return false;
-    }
+    if ("OPTIONS".equalsIgnoreCase(method)) return false;
 
     return SECURED_PATHS.stream().anyMatch(path::startsWith);
   }
@@ -112,7 +110,7 @@ public class TokenFilter extends OncePerRequestFilter {
   private Authentication createAuthentication(String tokenValue) {
     var token = tokenService.findTokenByValue(tokenValue);
 
-    var user = userService.findByEmail(token.owner().email());
+    var user = userService.findByEmail(token.owner().getEmail());
 
     return new UsernamePasswordAuthenticationToken(user, null, null);
   }

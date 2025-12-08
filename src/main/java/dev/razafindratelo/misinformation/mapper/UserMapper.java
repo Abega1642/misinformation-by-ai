@@ -2,23 +2,17 @@ package dev.razafindratelo.misinformation.mapper;
 
 import dev.razafindratelo.misinformation.model.User;
 import dev.razafindratelo.misinformation.repository.model.JUser;
-import lombok.NoArgsConstructor;
-import org.springframework.stereotype.Component;
+import java.util.List;
+import org.mapstruct.Mapper;
 
-@Component
-@NoArgsConstructor
-public class UserMapper {
+@Mapper(componentModel = "spring")
+public interface UserMapper {
 
-  public User toCoreModel(JUser jUser) {
-    return new User(
-        jUser.getId(),
-        jUser.getEmail(),
-        jUser.getFullName(),
-        jUser.getClerkId(),
-        jUser.getCreatedAt());
-  }
+  User toCoreModel(JUser jUser);
 
-  public JUser toPersistenceModel(User user) {
-    return new JUser(user.id(), user.email(), user.fullName(), user.clerkId(), user.createdAt());
-  }
+  JUser toPersistence(User user);
+
+  List<User> toCoreModel(List<JUser> jUsers);
+
+  List<JUser> toPersistence(List<User> users);
 }

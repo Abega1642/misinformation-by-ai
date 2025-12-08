@@ -29,7 +29,7 @@ public class TokenService {
     var id = randomUUID().toString();
     var owner = userService.findByClerkId(tokenRequest.clerkId());
 
-    log.info("Saving token of user with email={}", owner.email());
+    log.info("Saving token of user with email={}", owner.getEmail());
 
     var tokenRequested = new Token(id, owner, tokenRequest.token(), tokenRequest.expirationDate());
 

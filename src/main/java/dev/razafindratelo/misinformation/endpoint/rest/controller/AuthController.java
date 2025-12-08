@@ -1,29 +1,25 @@
 package dev.razafindratelo.misinformation.endpoint.rest.controller;
 
-import dev.razafindratelo.misinformation.endpoint.rest.controller.model.LoginRequest;
-import dev.razafindratelo.misinformation.endpoint.rest.controller.model.LoginResponse;
-import dev.razafindratelo.misinformation.endpoint.rest.controller.model.TokenRequest;
+import dev.razafindratelo.misinformation.endpoint.rest.controller.model.AuthRequest;
 import dev.razafindratelo.misinformation.manager.AuthManager;
-import dev.razafindratelo.misinformation.model.Token;
+import dev.razafindratelo.misinformation.model.User;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
+@Validated
 @RequestMapping("/auth")
 @RequiredArgsConstructor
 public class AuthController {
   private final AuthManager authManager;
 
   @PostMapping("/login")
-  public LoginResponse login(@RequestBody LoginRequest loginRequest) {
+  public User login(@Valid @RequestBody AuthRequest loginRequest) {
     return authManager.authenticate(loginRequest);
-  }
-
-  @PostMapping("/token")
-  public Token saveUserToken(@RequestBody TokenRequest tokenRequest) {
-    return authManager.saveUserToken(tokenRequest);
   }
 }
