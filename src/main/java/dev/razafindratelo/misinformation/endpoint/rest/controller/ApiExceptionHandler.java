@@ -7,16 +7,19 @@ import dev.razafindratelo.misinformation.exception.HmacCalculationException;
 import dev.razafindratelo.misinformation.exception.InvalidAuthorizationFormatException;
 import dev.razafindratelo.misinformation.exception.MediaUploadException;
 import dev.razafindratelo.misinformation.exception.MissingAuthorizationException;
+import dev.razafindratelo.misinformation.exception.ResourceDuplicatedException;
 import dev.razafindratelo.misinformation.exception.TemplateLoadingException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ConstraintViolationException;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.authorization.AuthorizationDeniedException;
+import org.springframework.validation.FieldError;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
@@ -113,6 +116,47 @@ public class ApiExceptionHandler {
     return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
   }
 
+  @ExceptionHandler(ResourceDuplicatedException.class)
+  public ResponseEntity<ErrorResponse> handleResourceDuplicated(
+      ResourceDuplicatedException ex, WebRequest request) {
+
+    var errorResponse =
+        ErrorResponse.of(
+            HttpStatus.CONFLICT, ex.getMessage(), getRequestPath(request), "RESOURCE_DUPLICATED");
+
+    return new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT);
+  }
+
+  @ExceptionHandler(DataIntegrityViolationException.class)
+  public ResponseEntity<ErrorResponse> handleDataIntegrityViolation(
+      DataIntegrityViolationException ex, WebRequest request) {
+
+    String userMessage = "A conflict occurred with existing data";
+    String errorCode = "DATA_CONFLICT";
+
+    Throwable rootCause = ex.getRootCause();
+
+    if (rootCause != null) {
+      String errorMessage = rootCause.getMessage().toLowerCase();
+
+      if (errorMessage.contains("email")
+          && (errorMessage.contains("unique") || errorMessage.contains("duplicate"))) {
+        userMessage = "Email already exists";
+        errorCode = "DUPLICATE_EMAIL";
+      } else if (errorMessage.contains("clerk_id")
+          || errorMessage.contains("clerk")
+              && (errorMessage.contains("unique") || errorMessage.contains("duplicate"))) {
+        userMessage = "Clerk ID already exists";
+        errorCode = "DUPLICATE_CLERK_ID";
+      }
+    }
+
+    var errorResponse =
+        ErrorResponse.of(HttpStatus.CONFLICT, userMessage, getRequestPath(request), errorCode);
+
+    return new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT);
+  }
+
   @ExceptionHandler(DirectoryUploadException.class)
   public ResponseEntity<ErrorResponse> handleDirectoryUploadException(
       DirectoryUploadException ex, WebRequest request) {
@@ -189,9 +233,15 @@ public class ApiExceptionHandler {
   @ExceptionHandler(MethodArgumentNotValidException.class)
   public ResponseEntity<ErrorResponse> handleValidationExceptions(
       MethodArgumentNotValidException ex, WebRequest request) {
+
+    String message =
+        ex.getBindingResult().getFieldErrors().stream()
+            .findFirst()
+            .map(FieldError::getDefaultMessage)
+            .orElse("Validation failed");
+
     var errorResponse =
-        ErrorResponse.of(
-            HttpStatus.BAD_REQUEST, ex.getMessage(), getRequestPath(request), "BAD_FORM");
+        ErrorResponse.of(HttpStatus.BAD_REQUEST, message, getRequestPath(request), "BAD_FORM");
 
     return ResponseEntity.badRequest().body(errorResponse);
   }

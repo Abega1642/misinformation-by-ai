@@ -19,8 +19,10 @@ public class ObjectMapperConfig {
     return new ObjectMapper()
         .registerModule(new JavaTimeModule())
         .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+        .configure(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT, true)
         .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
         .setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
-        .setSerializationInclusion(JsonInclude.Include.NON_NULL);
+        .setSerializationInclusion(JsonInclude.Include.NON_NULL)
+        .setDefaultPropertyInclusion(JsonInclude.Include.NON_NULL);
   }
 }

@@ -2,24 +2,19 @@ package dev.razafindratelo.misinformation.mapper;
 
 import dev.razafindratelo.misinformation.model.Text;
 import dev.razafindratelo.misinformation.repository.model.JText;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
+import java.util.List;
+import org.mapstruct.Mapper;
 
-@Component
-@RequiredArgsConstructor
-public class TextMapper {
-  private final UserMapper userMapper;
+@Mapper(
+    componentModel = "spring",
+    uses = {UserMapper.class})
+public interface TextMapper {
 
-  public Text toCoreModel(JText jText) {
-    return new Text(
-        jText.getId(),
-        userMapper.toCoreModel(jText.getOwner()),
-        jText.getValue(),
-        jText.getCreatedAt());
-  }
+  Text toCoreModel(JText jText);
 
-  public JText toPersistenceModel(Text text) {
-    return new JText(
-        text.id(), userMapper.toPersistenceModel(text.owner()), text.value(), text.createdAt());
-  }
+  JText toPersistenceModel(Text text);
+
+  List<Text> toCoreModel(List<JText> jTexts);
+
+  List<JText> toPersistenceModel(List<Text> texts);
 }

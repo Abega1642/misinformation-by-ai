@@ -36,7 +36,7 @@ public class TextService {
   public Text uploadText(@NotNull TextRequest request) {
 
     var owner = userService.findByEmail(request.email());
-    log.info("Request Text upload by user with email={}", owner.email());
+    log.info("Request Text upload by user with email={}", owner.getEmail());
 
     var id = randomUUID().toString();
     var creationTime = now();
@@ -68,7 +68,7 @@ public class TextService {
     var owner = userService.findByEmail(email);
     log.info(
         "Requesting for all Texts instances of user with email={} with page={} and size={}",
-        owner.email(),
+        owner.getEmail(),
         page,
         size);
     var pagination = paginator.apply(page, size);
@@ -77,7 +77,7 @@ public class TextService {
         PageRequest.of(
             pagination.get("page"), pagination.get("size"), Sort.by("createdAt").descending());
 
-    var results = textRepository.findAllByOwnerEmail(owner.email(), pageable);
+    var results = textRepository.findAllByOwnerEmail(owner.getEmail(), pageable);
     return results.map(textMapper::toCoreModel);
   }
 }

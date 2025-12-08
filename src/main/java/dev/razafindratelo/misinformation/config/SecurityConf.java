@@ -1,7 +1,7 @@
 package dev.razafindratelo.misinformation.config;
 
-import static com.resend.core.net.HttpMethod.DELETE;
 import static java.time.LocalDateTime.now;
+import static org.springframework.http.HttpMethod.DELETE;
 import static org.springframework.http.HttpMethod.GET;
 import static org.springframework.http.HttpMethod.OPTIONS;
 import static org.springframework.http.HttpMethod.PATCH;
@@ -21,6 +21,8 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -55,8 +57,6 @@ public class SecurityConf {
                     .requestMatchers(POST, "/auth/token")
                     .permitAll()
                     .requestMatchers(POST, "/auth/login")
-                    .permitAll()
-                    .requestMatchers(POST, "/api/**")
                     .permitAll()
                     .requestMatchers(
                         "/",
@@ -95,6 +95,11 @@ public class SecurityConf {
         writer.write(om.writeValueAsString(errorResponse));
       }
     };
+  }
+
+  @Bean
+  public PasswordEncoder passwordEncoder() {
+    return new BCryptPasswordEncoder();
   }
 
   @Bean
