@@ -13,12 +13,13 @@ import lombok.Setter;
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "@class")
 public abstract class InfraEvent implements Serializable {
 
+  private static final int MAX_HANDLER_INIT_DURATION_IN_SECOND = 90;
   @Getter @Setter protected int attemptNb;
 
   public abstract Duration maxConsumerDuration();
 
   public Duration eventHandlerInitMaxDuration() {
-    return Duration.ofSeconds(90);
+    return Duration.ofSeconds(MAX_HANDLER_INIT_DURATION_IN_SECOND);
   }
 
   public abstract Duration maxConsumerBackoffBetweenRetries();

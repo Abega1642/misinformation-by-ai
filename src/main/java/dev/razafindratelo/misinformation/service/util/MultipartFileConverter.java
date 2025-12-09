@@ -1,4 +1,4 @@
-package dev.razafindratelo.misinformation.service.media;
+package dev.razafindratelo.misinformation.service.util;
 
 import dev.razafindratelo.misinformation.exception.MultipartFileConversionException;
 import jakarta.validation.constraints.NotNull;

@@ -24,14 +24,16 @@ import lombok.ToString;
 @ToString
 @EqualsAndHashCode
 public class JText {
+
   @Id private String id;
 
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "owner_id", nullable = false)
   private JUser owner;
 
+  @Column(nullable = false, columnDefinition = "TEXT")
   private String value;
 
-  @Column(name = "created_at")
+  @Column(name = "created_at", nullable = false)
   private LocalDateTime createdAt;
 }
