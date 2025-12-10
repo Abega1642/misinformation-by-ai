@@ -48,8 +48,7 @@ public class HealthEmailController {
 
     } catch (Exception e) {
       log.error("Unexpected error during email health check for: {}", forJava(to), e);
-      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-          .body("Failed to send emails: " + e.getMessage());
+      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to send emails");
     }
   }
 }

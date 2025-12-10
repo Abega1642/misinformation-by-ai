@@ -2,7 +2,6 @@ package dev.razafindratelo.misinformation.service;
 
 import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -24,13 +23,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.security.crypto.password.PasswordEncoder;
 
 public class UserServiceIT extends FacadeIT {
 
   private static final String TEST_EMAIL = "test@example.com";
   private static final String TEST_FULL_NAME = "test full name";
-  private static final String TEST_PASSWORD = "SecurePass123!";
   private static final String MAIL_1 = "user1@example.com";
   private static final String MAIL_2 = "user2@example.com";
   private static final String MAIL_3 = "user3@example.com";
@@ -43,7 +40,6 @@ public class UserServiceIT extends FacadeIT {
   @Autowired private UserRepository userRepository;
   @Autowired private UserMapper userMapper;
   @Autowired private Paginator paginator;
-  @Autowired private PasswordEncoder passwordEncoder;
 
   @BeforeEach
   void setup() {
@@ -72,24 +68,6 @@ public class UserServiceIT extends FacadeIT {
     var savedUser = userRepository.findById(result.getId());
     assertTrue(savedUser.isPresent());
     assertEquals(result.getEmail(), savedUser.get().getEmail());
-  }
-
-  @Test
-  void register_user_with_password_succeeds() {
-    var request =
-        UserRequest.builder()
-            .email(TEST_EMAIL)
-            .fullName(TEST_FULL_NAME)
-            .clerkId(CLERK_ID)
-            .password(TEST_PASSWORD)
-            .build();
-
-    var result = userService.registerUser(request);
-
-    assertNotNull(result);
-    assertEquals(TEST_EMAIL, result.getEmail());
-    assertNotNull(result.getPassword());
-    assertFalse(result.isEmailVerified());
   }
 
   @Test
@@ -146,19 +124,6 @@ public class UserServiceIT extends FacadeIT {
         UserRequest.builder().email(MAIL_2).fullName(TEST_FULL_NAME).clerkId(CLERK_ID).build();
 
     assertThrows(ResourceDuplicatedException.class, () -> userService.registerUser(request2));
-  }
-
-  @Test
-  void register_user_with_short_password_throws_invalid_user_data_exception() {
-    var request =
-        UserRequest.builder()
-            .email(TEST_EMAIL)
-            .fullName(TEST_FULL_NAME)
-            .clerkId(CLERK_ID)
-            .password("short")
-            .build();
-
-    assertThrows(ConstraintViolationException.class, () -> userService.registerUser(request));
   }
 
   @Test

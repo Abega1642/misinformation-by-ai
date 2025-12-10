@@ -28,7 +28,6 @@ public class UserControllerIT extends FacadeIT {
 
   private static final String TEST_FULL_NAME = "Test Full Name";
   private static final String TEST_EMAIL = "test@example.com";
-  private static final String TEST_PASSWORD = "SecurePass123!";
   private static final String CLERK_ID = randomUUID().toString();
   private static final String USERS_SIGN_UP_ENDPOINT = "/users/sign-up";
   private static final String USERS_ENDPOINT = "/users";
@@ -72,7 +71,6 @@ public class UserControllerIT extends FacadeIT {
             .andExpect(jsonPath("$.clerk_id").value(CLERK_ID))
             .andExpect(jsonPath("$.role").value("USER"))
             .andExpect(jsonPath("$.status").value("INACTIVE"))
-            .andExpect(jsonPath("$.email_verified").value(false))
             .andReturn();
 
     var content = response.getResponse().getContentAsString();
@@ -80,27 +78,6 @@ public class UserControllerIT extends FacadeIT {
 
     assertNotNull(user.getId());
     assertEquals(TEST_EMAIL, user.getEmail());
-    assertEquals(1, userRepository.count());
-  }
-
-  @Test
-  void register_user_with_password_returns_200_and_user_not_verified() throws Exception {
-    var userRequest =
-        UserRequest.builder()
-            .email(TEST_EMAIL)
-            .fullName(TEST_FULL_NAME)
-            .clerkId(CLERK_ID)
-            .password(TEST_PASSWORD)
-            .build();
-    var request = generateRequest(userRequest);
-
-    mockMvc
-        .perform(post(USERS_SIGN_UP_ENDPOINT).contentType(APPLICATION_JSON).content(request))
-        .andExpect(status().isOk())
-        .andExpect(jsonPath("$.email").value(TEST_EMAIL))
-        .andExpect(jsonPath("$.email_verified").value(false))
-        .andExpect(jsonPath("$.password").exists());
-
     assertEquals(1, userRepository.count());
   }
 
@@ -182,24 +159,6 @@ public class UserControllerIT extends FacadeIT {
             jsonPath("$.message").value("User with clerk_id '" + CLERK_ID + "' already exists"));
 
     assertEquals(1, userRepository.count());
-  }
-
-  @Test
-  void register_user_with_short_password_returns_400() throws Exception {
-    var userRequest =
-        UserRequest.builder()
-            .email(TEST_EMAIL)
-            .fullName(TEST_FULL_NAME)
-            .clerkId(CLERK_ID)
-            .password("short")
-            .build();
-    var request = generateRequest(userRequest);
-
-    mockMvc
-        .perform(post(USERS_SIGN_UP_ENDPOINT).contentType(APPLICATION_JSON).content(request))
-        .andExpect(status().isBadRequest());
-
-    assertEquals(0, userRepository.count());
   }
 
   @Test
@@ -436,7 +395,6 @@ public class UserControllerIT extends FacadeIT {
         .andExpect(jsonPath("$.content[0].clerk_id").exists())
         .andExpect(jsonPath("$.content[0].role").exists())
         .andExpect(jsonPath("$.content[0].status").exists())
-        .andExpect(jsonPath("$.content[0].email_verified").exists())
         .andExpect(jsonPath("$.content[0].created_at").exists());
   }
 

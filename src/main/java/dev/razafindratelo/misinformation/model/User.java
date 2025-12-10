@@ -13,7 +13,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
-import org.springframework.lang.Nullable;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -27,10 +26,8 @@ public class User {
   @Email @NotBlank @NotNull private String email;
   @NotNull @NotBlank private String fullName;
   @NotNull @NotBlank private String clerkId;
-  @Nullable private String password;
   @NotNull private UserRole role;
   @NotNull private UserStatus status;
-  private boolean isEmailVerified;
   private LocalDateTime updatedAt;
   @NotNull private LocalDateTime createdAt;
 }

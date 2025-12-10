@@ -28,7 +28,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 @InfraGenerated
-class HealthEmailServiceTest {
+class HealthEmailServiceIT {
 
   private static final String VALID_EMAIL = "test@example.com";
   private static final String INVALID_EMAIL = "invalid-email";

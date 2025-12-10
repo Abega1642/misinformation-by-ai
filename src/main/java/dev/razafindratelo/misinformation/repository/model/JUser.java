@@ -40,8 +40,6 @@ public class JUser {
   @Column(name = "clerk_id", nullable = false)
   private String clerkId;
 
-  private String password;
-
   @Enumerated(EnumType.STRING)
   @JdbcTypeCode(SqlTypes.NAMED_ENUM)
   @Column(name = "user_role", nullable = false)
@@ -51,9 +49,6 @@ public class JUser {
   @JdbcTypeCode(SqlTypes.NAMED_ENUM)
   @Column(name = "user_status", nullable = false)
   private UserStatus status;
-
-  @Column(name = "is_email_verified")
-  private boolean isEmailVerified;
 
   @Column(name = "updated_at")
   private LocalDateTime updatedAt;

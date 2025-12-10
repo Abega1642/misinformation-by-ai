@@ -93,19 +93,16 @@ public class UserService {
             .email(userRequest.email())
             .fullName(userRequest.fullName())
             .clerkId(userRequest.clerkId())
-            .password(userRequest.password())
             .role(userRequest.role() != null ? userRequest.role() : UserRole.USER)
             .status(userRequest.status() != null ? userRequest.status() : UserStatus.INACTIVE)
-            .isEmailVerified(userRequest.password() == null)
             .createdAt(createdAt)
             .build();
 
     log.debug(
-        "Created user entity - id={}, role={}, status={}, is_email_verified={}",
+        "Created user entity - id={}, role={}, status={}",
         newUser.getId(),
         newUser.getRole(),
-        newUser.getStatus(),
-        newUser.isEmailVerified());
+        newUser.getStatus());
 
     try {
       var savedUser = userRepository.save(newUser);
