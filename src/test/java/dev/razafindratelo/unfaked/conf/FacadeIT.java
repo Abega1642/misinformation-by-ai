@@ -16,7 +16,6 @@ import org.springframework.test.context.DynamicPropertySource;
 @AutoConfigureMockMvc(addFilters = false)
 @Slf4j
 public abstract class FacadeIT {
-
   private static final PostgresConf POSTGRES_CONF = new PostgresConf();
   private static final RabbitMQConf RABBITMQ_CONF = new RabbitMQConf();
   private static final BucketConf BUCKET_CONF = new BucketConf();
