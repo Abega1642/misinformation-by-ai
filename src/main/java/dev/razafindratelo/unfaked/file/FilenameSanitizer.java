@@ -2,6 +2,10 @@ package dev.razafindratelo.unfaked.file;
 
 import static org.owasp.encoder.Encode.forJava;
 
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Set;
 import java.util.function.UnaryOperator;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
@@ -37,6 +41,9 @@ public class FilenameSanitizer implements UnaryOperator<String> {
   private static final int MAX_EXTENSION_LENGTH = 10;
 
   private static final String SAFE_CHAR_PATTERN = "[^a-zA-Z0-9._-]";
+
+  private static final Set<Character> UNSAFE_CHARS = Set.of(';', '<', '>', '|', '&', '$', '`');
+  private static final int MAX_PATH_LENGTH = 4_096;
 
   @Override
   public String apply(String originalFilename) {
@@ -75,20 +82,23 @@ public class FilenameSanitizer implements UnaryOperator<String> {
    * file;rm -rf /
    */
   private boolean isLegitimateFilePath(String filename) {
-    if (filename.contains("..")) {
+    if (filename == null || filename.isEmpty() || filename.length() > MAX_PATH_LENGTH) return false;
+
+    try {
+      Path path = Paths.get(filename).normalize();
+      String normalized = path.toString();
+
+      if (normalized.contains("..")) return false;
+
+      for (int i = 0; i < filename.length(); i++) {
+        if (UNSAFE_CHARS.contains(filename.charAt(i))) return false;
+      }
+
+      return path.isAbsolute() || path.getNameCount() > 0;
+
+    } catch (InvalidPathException e) {
       return false;
     }
-
-    // If it starts with a drive letter (C:\) or root (/), likely legitimate
-    if (filename.matches("^[A-Za-z]:\\\\.*") || filename.startsWith("/")) {
-      return true;
-    }
-
-    int separatorCount =
-        StringUtils.countMatches(filename, '\\') + StringUtils.countMatches(filename, '/');
-    boolean hasUnsafeChars = filename.matches(".*[;<>|&$`].*");
-
-    return separatorCount > 0 && !hasUnsafeChars;
   }
 
   /** Removes path separators from malicious patterns to flatten them. */
