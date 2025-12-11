@@ -5,7 +5,9 @@ import dev.razafindratelo.unfaked.repository.model.JMedia;
 import java.util.List;
 import org.mapstruct.Mapper;
 
-@Mapper(componentModel = "spring")
+@Mapper(
+    componentModel = "spring",
+    uses = {UserMapper.class})
 public interface MediaMapper {
   Media toCoreModel(JMedia jMedia);
 

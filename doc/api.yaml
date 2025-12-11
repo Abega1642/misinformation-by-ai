@@ -18,8 +18,6 @@ servers:
 tags:
   - name: Health
     description: Endpoints to verify system and bucket health (public access)
-  - name: Video
-    description: Endpoints related to Video
   - name: Docs
     description: API documentation endpoints and redirects
   - name: Authentication
@@ -43,102 +41,6 @@ paths:
                 type: string
                 example: /doc
 
-  /api/videos/check:
-    post:
-      tags:
-        - Detections
-      summary: Submit a video for AI-generated content detection
-      description: >
-        Generates a presigned URL from the given S3 bucket key and submits
-        the video to Sightengine's `/video/check.json` endpoint. Results are
-        posted asynchronously to the provided callback URL.
-      requestBody:
-        required: true
-        content:
-          application/x-www-form-urlencoded:
-            schema:
-              type: object
-              properties:
-                bucketKey:
-                  type: string
-                  description: S3 object key of the video to analyze
-                  example: users/john.doe/videos/video123.mp4
-                callbackUrl:
-                  type: string
-                  format: uri
-                  description: Public URL where Sightengine will POST results
-                  example: https://yourapp.com/api/videos/callback
-              required:
-                - bucketKey
-                - callbackUrl
-      responses:
-        '200':
-          description: Request successfully submitted to Sightengine
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    description: Submission status
-                    example: success
-                  request_id:
-                    type: string
-                    description: Sightengine request identifier
-                    example: req_123456789
-        '400':
-          description: Invalid input (missing bucketKey or callbackUrl)
-        '500':
-          description: Internal server error during presigned URL generation or API call
-
-  /api/videos/callback:
-    post:
-      tags:
-        - Detections
-      summary: Receive analysis results from Sightengine
-      description: >
-        Endpoint that Sightengine calls with the analysis results once
-        processing is complete. The payload contains detection data.
-      operationId: videoCallback
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                status:
-                  type: string
-                  description: Processing status
-                  example: success
-                request:
-                  type: object
-                  properties:
-                    id:
-                      type: string
-                      description: Sightengine request ID
-                      example: req_123456789
-                data:
-                  type: object
-                  properties:
-                    genai:
-                      type: object
-                      properties:
-                        fake:
-                          type: boolean
-                          description: Whether the video is AI-generated
-                          example: true
-                        score:
-                          type: number
-                          format: float
-                          description: Confidence score (0–1)
-                          example: 0.92
-      responses:
-        '200':
-          description: Callback successfully processed
-        '400':
-          description: Invalid payload
 
   /ping:
     get:
@@ -171,7 +73,7 @@ paths:
             application/json:
               schema:
                 type: string
-                example: "https://arsmedia-bucket.s3.amazonaws.com/health/uuid.txt?X-Amz-Signature=..."
+                example: "https://unfaked-bucket.s3.amazonaws.com/health/uuid.txt?X-Amz-Signature=..."
         500:
           description: Uploaded and downloaded content mismatch or other error occurred.
           content:
@@ -320,22 +222,22 @@ paths:
         "403":
           $ref: "#/components/responses/ForbiddenLoginOrClient"
 
-  /api/media/videos/upload:
+  /api/v1/medias/upload:
     post:
-      operationId: uploadVideo
+      operationId: uploadMedia
       tags:
-        - Video
-      summary: Upload a video file
+        - Medias
+      summary: Upload a media (video, audio, image)
       description: >
-        Uploads a video file to the storage bucket.
+        Uploads a media file (video, audio, image) to the storage bucket.
         **Requires client credentials and Bearer token authentication.**
       security:
         - BearerAuth: [ ]
       parameters:
-        - name: userEmail
+        - name: from-userEmail
           in: query
           required: true
-          description: Email of the user uploading the video
+          description: Email of the user uploading the media
           schema:
             type: string
             format: email
@@ -349,16 +251,16 @@ paths:
                 file:
                   type: string
                   format: binary
-                  description: Video file to upload
+                  description: Media (video, image, audio) file to upload
               required:
                 - file
       responses:
         "200":
-          description: Video uploaded successfully
+          description: Media (video, audio, image) uploaded successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Video"
+                $ref: "#/components/schemas/Media"
         "400":
           description: Invalid request - missing file or invalid email
           content:
@@ -369,8 +271,8 @@ paths:
                 timestamp: "2025-11-04T10:30:00Z"
                 status: 400
                 error: "Bad Request"
-                message: "Video file is required and userEmail must be valid"
-                path: "/api/media/videos/upload"
+                message: "Media (video, audio, image) file is required and userEmail must be valid"
+                path: "/api/v1/medias/upload"
                 errorCode: "BAD_FORM"
         "401":
           $ref: "#/components/responses/Unauthorized"
@@ -379,46 +281,36 @@ paths:
         "500":
           $ref: "#/components/responses/InternalServerError"
 
-  /api/media/images/upload:
+
+
+  /api/v1/detections/texts:
     post:
-      operationId: uploadImage
       tags:
-        - Image
-      summary: Upload an image file
-      description: >
-        Uploads an image file to the storage bucket.
-        **Bearer token authentication.**
-      security:
-        - BearerAuth: [ ]
+        - Detections
+      summary: Analyse a text for detection
       parameters:
-        - name: userEmail
-          in: query
+        - in: query
+          name: from-userEmail
           required: true
-          description: Email of the user uploading the image
           schema:
-            $ref: "#/components/schemas/Email"
-      requestBody:
-        required: true
-        content:
-          multipart/form-data:
-            schema:
-              type: object
-              properties:
-                file:
-                  type: string
-                  format: binary
-                  description: Image file to upload
-              required:
-                - file
+            type: string
+            format: email
+          description: The email of the user sending the request
+        - in: query
+          name: text-id
+          required: true
+          schema:
+            type: string
+          description: The ID of the text to analyse
       responses:
-        "200":
-          description: Image uploaded successfully
+        '200':
+          description: Text analysed successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Image"
+                $ref: '#/components/schemas/TextDetectionResult'
         "400":
-          description: Invalid request - missing file or invalid email
+          description: Invalid request - missing text id or invalid email
           content:
             application/json:
               schema:
@@ -427,8 +319,8 @@ paths:
                 timestamp: "2025-11-04T10:30:00Z"
                 status: 400
                 error: "Bad Request"
-                message: "Video file is required and userEmail must be valid"
-                path: "/api/media/images/upload"
+                message: "Text id is required and userEmail must be valid"
+                path: "/api/v1/detections/texts"
                 errorCode: "BAD_FORM"
         "401":
           $ref: "#/components/responses/Unauthorized"
@@ -437,63 +329,7 @@ paths:
         "500":
           $ref: "#/components/responses/InternalServerError"
 
-  /api/media/audios/upload:
-    post:
-      operationId: uploadAudio
-      tags:
-        - Audio
-      summary: Upload an audio file
-      description: >
-        Uploads an audio file to the storage bucket.
-        **Bearer token authentication.**
-      security:
-        - BearerAuth: [ ]
-      parameters:
-        - name: userEmail
-          in: query
-          required: true
-          description: Email of the user uploading the audio
-          schema:
-            $ref: "#/components/schemas/Email"
-      requestBody:
-        required: true
-        content:
-          multipart/form-data:
-            schema:
-              type: object
-              properties:
-                file:
-                  type: string
-                  format: binary
-                  description: Audio file to upload
-              required:
-                - file
-      responses:
-        "200":
-          description: Audio uploaded successfully
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Audio"
-        "400":
-          description: Invalid request - missing file or invalid email
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-              example:
-                timestamp: "2025-11-04T10:30:00Z"
-                status: 400
-                error: "Bad Request"
-                message: "Video file is required and userEmail must be valid"
-                path: "/api/media/images/upload"
-                errorCode: "BAD_FORM"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/InvalidClientCredentials"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
+
 
   /api/media/texts/upload:
     post:
@@ -966,6 +802,96 @@ components:
         clerk_id:
           $ref: "#/components/schemas/UUID"
 
+    TextDetectionResult:
+      type: object
+      required:
+        - text
+        - judgment
+        - proofs
+      properties:
+        text:
+          $ref: '#/components/schemas/Text'
+        judgment:
+          type: string
+        detectedAt:
+          type: string
+          format: date-time
+        searchQuery:
+          type: string
+        proofs:
+          type: array
+          items:
+            $ref: '#/components/schemas/Proof'
+
+    User:
+      type: object
+      required:
+        - id
+        - email
+        - fullName
+        - clerkId
+        - role
+        - status
+        - createdAt
+      properties:
+        id:
+          $ref: "#/components/schemas/UUID"
+        email:
+          $ref: "#/components/schemas/Email"
+        fullName:
+          $ref: "#/components/schemas/FullName"
+        clerkId:
+          $ref: "#/components/schemas/UUID"
+        role:
+          $ref: '#/components/schemas/UserRole'
+        status:
+          $ref: '#/components/schemas/UserStatus'
+        updatedAt:
+          $ref: "#/components/schemas/Date"
+        createdAt:
+          $ref: "#/components/schemas/Date"
+
+    UserRole:
+      type: string
+      enum:
+        - ADMIN
+        - USER
+
+    UserStatus:
+      type: string
+      enum:
+        - ACTIVE
+        - INACTIVE
+        - SUSPENDED
+        - DELETED
+
+    Proof:
+      type: object
+      required:
+        - title
+        - url
+        - type
+      properties:
+        title:
+          type: string
+          description: Title of the proof
+        url:
+          type: string
+          format: uri
+          description: URL of the proof
+        snippet:
+          type: string
+          description: Optional snippet of the proof
+        type:
+          $ref: '#/components/schemas/ProofType'
+
+    ProofType:
+      type: string
+      description: The type of proof
+      enum:
+        - SUPPORTING
+        - REFUTING
+        - NEUTRAL
 
     UserCreateRequest:
       type: object
@@ -977,18 +903,6 @@ components:
           $ref: "#/components/schemas/FullName"
         clerk_id:
           $ref: "#/components/schemas/UUID"
-
-    User:
-      type: object
-      properties:
-        id:
-          $ref: "#/components/schemas/UUID"
-        email:
-          $ref: "#/components/schemas/Email"
-        clerk_id:
-          $ref: "#/components/schemas/UUID"
-        creation_date:
-          $ref: "#/components/schemas/Date"
 
     LoginResponse:
       type: object
@@ -1003,164 +917,79 @@ components:
         user:
           $ref: "#/components/schemas/User"
 
-    ImageFormat:
-      type: string
-      enum: [ JPEG, PNG, GIF, BMP, TIFF, WEBP, RAW, SVG ]
-
-    Image:
-      allOf:
-        - $ref: "#/components/schemas/Media"
-        - type: object
-          required:
-            - width
-            - height
-            - format
-            - bitDepth
-            - colorModel
-          properties:
-            width:
-              type: integer
-              format: int32
-              description: Image width in pixels
-            height:
-              type: integer
-              format: int32
-              description: Image height in pixels
-            format:
-              $ref: "#/components/schemas/ImageFormat"
-            bitDepth:
-              type: integer
-              format: int32
-              description: Color depth in bits per pixel
-            colorModel:
-              type: string
-              enum: [ RGB, CMYK, Grayscale, LAB, HSV, Indexed ]
-              description: Color model/space used
-            dpi:
-              type: number
-              format: double
-              description: Dots per inch (resolution)
-            iso:
-              type: integer
-              format: int32
-              description: ISO sensitivity (for photos)
-
-    Audio:
-      allOf:
-        - $ref: "#/components/schemas/Media"
-        - type: object
-          required:
-            - duration
-            - bitRate
-            - sampleRate
-            - channels
-            - codec
-            - format
-          properties:
-            duration:
-              type: number
-              format: double
-              description: Audio duration in seconds
-            bitRate:
-              type: integer
-              format: int32
-              description: Audio bit rate in bits per second
-            sampleRate:
-              type: integer
-              format: int32
-              description: Audio sample rate in Hz
-            channels:
-              type: integer
-              format: int32
-              description: Number of audio channels
-            codec:
-              $ref: "#/components/schemas/AudioCodec"
-            format:
-              $ref: "#/components/schemas/ContainerFormat"
 
     Media:
       type: object
-      discriminator:
-        propertyName: fileType
       required:
         - id
         - fileName
         - size
         - sizeType
-        - fileType
+        - fileExtension
         - createdAt
         - bucketKey
         - owner
       properties:
         id:
-          $ref: "#/components/schemas/UUID"
+          type: string
         fileName:
           type: string
-          description: Name of the media file
         size:
           type: number
           format: double
-          description: Size of the file in bytes
         sizeType:
-          $ref: "#/components/schemas/SizeType"
-        fileType:
-          $ref: "#/components/schemas/FileType"
+          $ref: '#/components/schemas/SizeType'
+        fileExtension:
+          $ref: '#/components/schemas/FileExtension'
         createdAt:
-          $ref: "#/components/schemas/Date"
+          type: string
+          format: date-time
         bucketKey:
           type: string
-          description: Path to the file in storage
         owner:
-          $ref: "#/components/schemas/User"
+          $ref: '#/components/schemas/User'
+        fileType:
+          $ref: '#/components/schemas/FileType'
+          description: Derived from fileExtension
 
-    Video:
-      allOf:
-        - $ref: "#/components/schemas/Media"
-        - type: object
-          required:
-            - duration
-            - codec
-            - width
-            - height
-            - containerFormat
-          properties:
-            duration:
-              type: number
-              format: double
-              description: Video duration in seconds
-            codec:
-              $ref: "#/components/schemas/Codec"
-            width:
-              type: integer
-              format: int32
-              description: Video width in pixels
-            height:
-              type: integer
-              format: int32
-              description: Video height in pixels
-            frameRate:
-              type: number
-              format: double
-              description: Frames per second
-            aspectRatio:
-              type: string
-              description: Display aspect ratio (e.g., "16:9", "4:3")
-            containerFormat:
-              $ref: "#/components/schemas/ContainerFormat"
-            bitRate:
-              type: number
-              format: double
-              description: Bit rate in bits per second
-            audioCodec:
-              $ref: "#/components/schemas/AudioCodec"
-            audioChannels:
-              type: integer
-              format: int32
-              description: Number of audio channels
-            audioSampleRate:
-              type: integer
-              format: int32
-              description: Audio sample rate in Hz
+
+    FileExtension:
+      type: string
+      description: File extension type
+      enum:
+        # Images
+        - JPG
+        - JPEG
+        - PNG
+        - GIF
+        - WEBP
+        - SVG
+        - BMP
+        - TIFF
+        - ICO
+
+        # Videos
+        - MP4
+        - AVI
+        - MOV
+        - WMV
+        - FLV
+        - MKV
+        - WEBM
+        - MPEG
+        - MPG
+
+        # Audio
+        - MP3
+        - WAV
+        - FLAC
+        - AAC
+        - OGG
+        - WMA
+        - M4A
+        - OPUS
+        - AIFF
+
 
     TextRequest:
       type: object
