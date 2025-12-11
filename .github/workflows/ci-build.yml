@@ -26,21 +26,21 @@ jobs:
           context: .
           push: false
           load: true
-          tags: misinformation-app:${{ github.sha }}
+          tags: unfaked-app:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
       - name: Verify Docker image was created
         run: |
-          docker images | grep misinformation-app
+          docker images | grep unfaked-app
           echo "Docker image build successful!"
 
       - name: Verify JAR file exists in image
         run: |
-          docker run --rm --entrypoint sh misinformation-app:${{ github.sha }} -c "ls -lh /app/app.jar"
+          docker run --rm --entrypoint sh unfaked-app:${{ github.sha }} -c "ls -lh /app/app.jar"
           echo "Application JAR found in image!"
 
       - name: Verify Java version in image
         run: |
-          docker run --rm --entrypoint sh misinformation-app:${{ github.sha }} -c "java -version"
+          docker run --rm --entrypoint sh unfaked-app:${{ github.sha }} -c "java -version"
           echo "Java 21 verified in image!"
