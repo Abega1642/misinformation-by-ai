@@ -10,6 +10,8 @@ import dev.razafindratelo.unfaked.model.detection.TextDetectionResult;
 import dev.razafindratelo.unfaked.service.util.QueryFormatter;
 import dev.razafindratelo.unfaked.service.util.SearchResultParser;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -24,9 +26,18 @@ import org.springframework.validation.annotation.Validated;
 @RequiredArgsConstructor
 public class TextDetectionService {
 
+  private final TextService textService;
   private final QueryFormatter queryFormatter;
   private final SerpApiClient serpApiClient;
   private final SearchResultParser searchResultParser;
+
+  public TextDetectionResult detect(
+      @NotNull @NotBlank String textId, @Email @NotBlank @NotNull String userEmail) {
+    var textInstance = textService.findTextInstance(textId, userEmail);
+    log.info("Start text detection request from userEmil={}", textInstance.owner().getEmail());
+
+    return detect(textInstance);
+  }
 
   public TextDetectionResult detect(@NotNull @Valid Text text) {
     log.info("Starting text detection for text ID: {}", forJava(text.id()));

@@ -41,6 +41,8 @@ class TextDetectionServiceIT {
 
   @Mock private SerpApiClient serpApiClient;
 
+  @Mock private TextService textService;
+
   @Mock private SearchResultParser searchResultParser;
 
   @Mock private User mockUser;
@@ -49,7 +51,8 @@ class TextDetectionServiceIT {
 
   @BeforeEach
   void setUp() {
-    service = new TextDetectionService(queryFormatter, serpApiClient, searchResultParser);
+    service =
+        new TextDetectionService(textService, queryFormatter, serpApiClient, searchResultParser);
   }
 
   @Test
