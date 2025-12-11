@@ -3,6 +3,7 @@ package dev.razafindratelo.unfaked.service;
 import static org.owasp.encoder.Encode.forJava;
 
 import dev.razafindratelo.unfaked.file.BucketComponent;
+import dev.razafindratelo.unfaked.file.FilenameSanitizer;
 import dev.razafindratelo.unfaked.mapper.MediaMapper;
 import dev.razafindratelo.unfaked.model.Media;
 import dev.razafindratelo.unfaked.model.User;
@@ -12,6 +13,7 @@ import dev.razafindratelo.unfaked.service.util.MultipartFileToMediaConverter;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -28,6 +30,7 @@ public class MediaService {
   private final BucketComponent bucketComponent;
   private final MultipartFileToMediaConverter mediaConverter;
   private final UserService userService;
+  private final FilenameSanitizer filenameSanitizer;
 
   @Transactional
   public Media uploadMedia(MultipartFile multipartFile, String userEmail) {
@@ -94,7 +97,9 @@ public class MediaService {
   }
 
   private File convertMultipartFileToFile(MultipartFile multipartFile) throws IOException {
-    File tempFile = File.createTempFile("upload-", "-" + multipartFile.getOriginalFilename());
+    String sanitizedFilename = filenameSanitizer.apply(multipartFile.getOriginalFilename());
+    var tempPath = Files.createTempFile("upload-", "-" + sanitizedFilename);
+    var tempFile = tempPath.toFile();
 
     try (FileOutputStream fos = new FileOutputStream(tempFile)) {
       fos.write(multipartFile.getBytes());

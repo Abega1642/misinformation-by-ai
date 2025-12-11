@@ -7,11 +7,13 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import dev.razafindratelo.unfaked.file.BucketComponent;
+import dev.razafindratelo.unfaked.file.FilenameSanitizer;
 import dev.razafindratelo.unfaked.mapper.MediaMapper;
 import dev.razafindratelo.unfaked.model.Media;
 import dev.razafindratelo.unfaked.model.User;
@@ -42,16 +44,12 @@ class MediaServiceIT {
   private static final double TEST_FILE_SIZE_MB = 5.0;
 
   @Mock private MediaRepository mediaRepository;
-
   @Mock private MediaMapper mediaMapper;
-
   @Mock private BucketComponent bucketComponent;
-
   @Mock private MultipartFileToMediaConverter mediaConverter;
-
   @Mock private UserService userService;
-
   @Mock private MultipartFile multipartFile;
+  @Mock private FilenameSanitizer filenameSanitizer;
 
   @InjectMocks private MediaService subject;
 
@@ -94,6 +92,8 @@ class MediaServiceIT {
     when(multipartFile.getOriginalFilename()).thenReturn(TEST_FILENAME);
     when(multipartFile.getBytes()).thenReturn(new byte[100]);
 
+    when(filenameSanitizer.apply(TEST_FILENAME)).thenReturn(TEST_FILENAME);
+
     when(userService.findByEmail(TEST_USER_EMAIL)).thenReturn(testUser);
     when(mediaConverter.apply(multipartFile, testUser)).thenReturn(testMedia);
     when(mediaMapper.toPersistence(testMedia)).thenReturn(testJMedia);
@@ -135,6 +135,9 @@ class MediaServiceIT {
     when(multipartFile.getSize()).thenReturn(0L);
     when(multipartFile.getOriginalFilename()).thenReturn(TEST_FILENAME);
 
+    // Sanitizer is *never called*, so it must be lenient
+    lenient().when(filenameSanitizer.apply(TEST_FILENAME)).thenReturn(TEST_FILENAME);
+
     IllegalArgumentException exception =
         assertThrows(
             IllegalArgumentException.class,
@@ -148,10 +151,12 @@ class MediaServiceIT {
 
   @Test
   void upload_media_should_throw_exception_when_file_exceeds_max_size() {
-    long oversizedFile = 101L * 1024 * 1024; // 101MB
+    long oversizedFile = 101L * 1024 * 1024;
     when(multipartFile.isEmpty()).thenReturn(false);
     when(multipartFile.getSize()).thenReturn(oversizedFile);
     when(multipartFile.getOriginalFilename()).thenReturn(TEST_FILENAME);
+
+    lenient().when(filenameSanitizer.apply(TEST_FILENAME)).thenReturn(TEST_FILENAME);
 
     IllegalArgumentException exception =
         assertThrows(
@@ -170,6 +175,8 @@ class MediaServiceIT {
     when(multipartFile.getSize()).thenReturn(TEST_FILE_SIZE_BYTES);
     when(multipartFile.getOriginalFilename()).thenReturn(TEST_FILENAME);
     when(multipartFile.getBytes()).thenReturn(new byte[100]);
+
+    when(filenameSanitizer.apply(TEST_FILENAME)).thenReturn(TEST_FILENAME);
 
     when(userService.findByEmail(TEST_USER_EMAIL)).thenReturn(testUser);
     when(mediaConverter.apply(multipartFile, testUser)).thenReturn(testMedia);
@@ -191,6 +198,8 @@ class MediaServiceIT {
     when(multipartFile.getOriginalFilename()).thenReturn(TEST_FILENAME);
     when(multipartFile.getBytes()).thenReturn(new byte[100]);
 
+    when(filenameSanitizer.apply(TEST_FILENAME)).thenReturn(TEST_FILENAME);
+
     when(userService.findByEmail(TEST_USER_EMAIL)).thenReturn(testUser);
     when(mediaConverter.apply(multipartFile, testUser)).thenReturn(testMedia);
     when(mediaMapper.toPersistence(testMedia)).thenReturn(testJMedia);
@@ -210,6 +219,8 @@ class MediaServiceIT {
     when(multipartFile.getSize()).thenReturn(TEST_FILE_SIZE_BYTES);
     when(multipartFile.getOriginalFilename()).thenReturn(TEST_FILENAME);
     when(multipartFile.getBytes()).thenReturn(new byte[100]);
+
+    when(filenameSanitizer.apply(TEST_FILENAME)).thenReturn(TEST_FILENAME);
 
     when(userService.findByEmail(TEST_USER_EMAIL)).thenReturn(testUser);
     when(mediaConverter.apply(multipartFile, testUser)).thenReturn(testMedia);
@@ -231,6 +242,8 @@ class MediaServiceIT {
     when(multipartFile.getSize()).thenReturn(TEST_FILE_SIZE_BYTES);
     when(multipartFile.getOriginalFilename()).thenReturn(TEST_FILENAME);
     when(multipartFile.getBytes()).thenReturn(new byte[100]);
+
+    when(filenameSanitizer.apply(TEST_FILENAME)).thenReturn(TEST_FILENAME);
 
     when(userService.findByEmail(TEST_USER_EMAIL)).thenReturn(testUser);
     when(mediaConverter.apply(multipartFile, testUser)).thenReturn(testMedia);
