@@ -1,5 +1,7 @@
 package dev.razafindratelo.unfaked.config;
 
+import static org.owasp.encoder.Encode.forJava;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.razafindratelo.unfaked.endpoint.rest.controller.model.ErrorResponse;
 import dev.razafindratelo.unfaked.exception.InvalidAuthorizationFormatException;
@@ -63,7 +65,7 @@ public class TokenFilter extends OncePerRequestFilter {
       var authentication = createAuthentication(token);
       SecurityContextHolder.getContext().setAuthentication(authentication);
 
-      log.debug("Successfully authenticated user for path: {}", request.getServletPath());
+      log.debug("Successfully authenticated user for path: {}", forJava(request.getServletPath()));
       filterChain.doFilter(request, response);
 
     } catch (AuthenticationException ex) {
