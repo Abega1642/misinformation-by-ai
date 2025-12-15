@@ -25,6 +25,8 @@ public class GroqApiClient {
 
   private static final String CONTENT_PROPERTY = "content";
   private static final Duration CONNECT_TIMEOUT_DURATION = Duration.ofSeconds(30);
+  private static final int REDIRECTION_CODE = 300;
+  private static final int OK_CODE = 200;
   private final HttpClient httpClient;
 
   @Value("${groq.api.url}")
@@ -69,7 +71,7 @@ public class GroqApiClient {
       HttpResponse<String> response =
           httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
-      if (response.statusCode() < 200 || response.statusCode() >= 300) {
+      if (response.statusCode() < OK_CODE || response.statusCode() >= REDIRECTION_CODE) {
         log.error("Groq API request failed with status: {}", response.statusCode());
         throw new GroqApiException("Groq API returned status: " + response.statusCode());
       }

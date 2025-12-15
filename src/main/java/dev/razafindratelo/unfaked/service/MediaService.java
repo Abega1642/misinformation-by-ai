@@ -25,6 +25,8 @@ import org.springframework.web.multipart.MultipartFile;
 @RequiredArgsConstructor
 public class MediaService {
 
+  private static final int KILO = 1024;
+  private static final int MAX_SIZE_ALLOWED = 100 * KILO * KILO;
   private final MediaRepository mediaRepository;
   private final MediaMapper mediaMapper;
   private final BucketComponent bucketComponent;
@@ -86,12 +88,11 @@ public class MediaService {
       throw new IllegalArgumentException("File cannot have zero size");
     }
 
-    long maxSizeBytes = 100 * 1024 * 1024; // 100MB
-    if (file.getSize() > maxSizeBytes) {
+    if (file.getSize() > MAX_SIZE_ALLOWED) {
       log.error(
           "File size exceeds maximum allowed: size={} bytes, max={} bytes",
           file.getSize(),
-          maxSizeBytes);
+          MAX_SIZE_ALLOWED);
       throw new IllegalArgumentException("File size exceeds maximum allowed size of 100MB");
     }
   }
@@ -111,9 +112,8 @@ public class MediaService {
   private void cleanupTempFile(File tempFile) {
     if (tempFile != null && tempFile.exists()) {
       boolean deleted = tempFile.delete();
-      if (!deleted) {
+      if (!deleted)
         log.warn("Failed to delete temporary file: path={}", forJava(tempFile.getAbsolutePath()));
-      }
     }
   }
 }

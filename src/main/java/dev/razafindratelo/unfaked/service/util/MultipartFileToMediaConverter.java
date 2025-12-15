@@ -77,10 +77,10 @@ public class MultipartFileToMediaConverter implements BiFunction<MultipartFile, 
   }
 
   private String sanitizeFilename(String filename) {
-    // Remove path traversal attempts and dangerous characters
+    int maxInd = 255;
     return filename
         .replaceAll("[^a-zA-Z0-9._-]", "_")
         .replaceAll("\\.\\.", "")
-        .substring(0, Math.min(filename.length(), 255));
+        .substring(0, Math.min(filename.length(), maxInd));
   }
 }

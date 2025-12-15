@@ -43,7 +43,6 @@ public class TokenService {
         tokenRepository
             .findByToken(value)
             .orElseThrow(() -> new EntityNotFoundException("No Token of value " + value));
-    log.info("Requesting token value with value={}", token.getToken());
 
     return tokenMapper.toCoreModel(token);
   }
@@ -55,10 +54,7 @@ public class TokenService {
             .orElseThrow(() -> new EntityNotFoundException("No Token of value " + tokenValue));
     var owner = token.getOwner();
 
-    log.info(
-        "Checking if token is valid for token={} and userEmail={}",
-        token.getToken(),
-        owner.getEmail());
+    log.info("Checking if token is valid for userEmail={}", owner.getEmail());
 
     return token.getExpirationDate().isAfter(now());
   }

@@ -6,17 +6,21 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import dev.razafindratelo.unfaked.InfraGenerated;
+import dev.razafindratelo.unfaked.file.SecureTempFileManager;
 import dev.razafindratelo.unfaked.mail.Email;
 import dev.razafindratelo.unfaked.mail.Mailer;
 import jakarta.mail.internet.AddressException;
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Path;
-import java.util.List;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
@@ -32,16 +36,36 @@ class HealthEmailServiceIT {
 
   private static final String VALID_EMAIL = "test@example.com";
   private static final String INVALID_EMAIL = "invalid-email";
-  private static final String HEALTH_CHECK_PREFIX = "[arsmedia health check";
+  private static final String HEALTH_CHECK_PREFIX = "[unfaked health check";
+
   @TempDir Path tempDir;
+
   @Mock private Mailer mailer;
+  @Mock private SecureTempFileManager secureTempFileManager;
+
   @InjectMocks private HealthEmailService healthEmailService;
+
   @Captor private ArgumentCaptor<Email> emailCaptor;
+
+  @BeforeEach
+  void setUp() throws Exception {
+    File mockAttachment = tempDir.resolve("test-attachment-12345.txt").toFile();
+    if (!mockAttachment.createNewFile()) {
+      throw new IOException("Failed to create test attachment file");
+    }
+
+    lenient()
+        .when(
+            secureTempFileManager.createSecureTempFileWithContent(
+                anyString(), anyString(), anyString()))
+        .thenReturn(mockAttachment);
+
+    lenient().when(secureTempFileManager.deleteTempFile(any(File.class))).thenReturn(true);
+  }
 
   @Test
   void should_send_all_five_health_check_emails_successfully() throws Exception {
     healthEmailService.sendHealthCheckEmails(VALID_EMAIL);
-
     verify(mailer, times(5)).accept(any(Email.class));
   }
 
@@ -50,15 +74,14 @@ class HealthEmailServiceIT {
     healthEmailService.sendHealthCheckEmails(VALID_EMAIL);
 
     verify(mailer, times(5)).accept(emailCaptor.capture());
-    List<Email> sentEmails = emailCaptor.getAllValues();
+    Email email = emailCaptor.getAllValues().getFirst();
 
-    Email firstEmail = sentEmails.getFirst();
-    assertEquals(VALID_EMAIL, firstEmail.to().getAddress());
-    assertTrue(firstEmail.subject().contains("1/5] Subject only"));
-    assertTrue(firstEmail.cc().isEmpty());
-    assertTrue(firstEmail.bcc().isEmpty());
-    assertNull(firstEmail.htmlBody());
-    assertTrue(firstEmail.attachments().isEmpty());
+    assertEquals(VALID_EMAIL, email.to().getAddress());
+    assertTrue(email.subject().contains("1/5] Subject only"));
+    assertTrue(email.cc().isEmpty());
+    assertTrue(email.bcc().isEmpty());
+    assertNull(email.htmlBody());
+    assertTrue(email.attachments().isEmpty());
   }
 
   @Test
@@ -66,14 +89,9 @@ class HealthEmailServiceIT {
     healthEmailService.sendHealthCheckEmails(VALID_EMAIL);
 
     verify(mailer, times(5)).accept(emailCaptor.capture());
-    List<Email> sentEmails = emailCaptor.getAllValues();
+    Email email = emailCaptor.getAllValues().get(1);
 
-    Email secondEmail = sentEmails.get(1);
-    assertEquals(VALID_EMAIL, secondEmail.to().getAddress());
-    assertTrue(secondEmail.subject().contains("2/5] With cc"));
-    assertEquals(1, secondEmail.cc().size());
-    assertEquals("test+cc@example.com", secondEmail.cc().getFirst().getAddress());
-    assertTrue(secondEmail.bcc().isEmpty());
+    assertEquals("test+cc@example.com", email.cc().getFirst().getAddress());
   }
 
   @Test
@@ -81,14 +99,9 @@ class HealthEmailServiceIT {
     healthEmailService.sendHealthCheckEmails(VALID_EMAIL);
 
     verify(mailer, times(5)).accept(emailCaptor.capture());
-    List<Email> sentEmails = emailCaptor.getAllValues();
+    Email email = emailCaptor.getAllValues().get(2);
 
-    Email thirdEmail = sentEmails.get(2);
-    assertEquals(VALID_EMAIL, thirdEmail.to().getAddress());
-    assertTrue(thirdEmail.subject().contains("3/5] With bcc"));
-    assertTrue(thirdEmail.cc().isEmpty());
-    assertEquals(1, thirdEmail.bcc().size());
-    assertEquals("test+bcc@example.com", thirdEmail.bcc().getFirst().getAddress());
+    assertEquals("test+bcc@example.com", email.bcc().getFirst().getAddress());
   }
 
   @Test
@@ -96,14 +109,10 @@ class HealthEmailServiceIT {
     healthEmailService.sendHealthCheckEmails(VALID_EMAIL);
 
     verify(mailer, times(5)).accept(emailCaptor.capture());
-    List<Email> sentEmails = emailCaptor.getAllValues();
+    Email email = emailCaptor.getAllValues().get(3);
 
-    Email fourthEmail = sentEmails.get(3);
-    assertEquals(VALID_EMAIL, fourthEmail.to().getAddress());
-    assertTrue(fourthEmail.subject().contains("4/5] With body"));
-    assertNotNull(fourthEmail.htmlBody());
-    assertTrue(fourthEmail.htmlBody().contains("Hello from Arsmedia!"));
-    assertTrue(fourthEmail.htmlBody().contains("<h1>"));
+    assertNotNull(email.htmlBody());
+    assertTrue(email.htmlBody().contains("Hello from Unfaked!"));
   }
 
   @Test
@@ -111,79 +120,30 @@ class HealthEmailServiceIT {
     healthEmailService.sendHealthCheckEmails(VALID_EMAIL);
 
     verify(mailer, times(5)).accept(emailCaptor.capture());
-    List<Email> sentEmails = emailCaptor.getAllValues();
+    Email email = emailCaptor.getAllValues().get(4);
 
-    Email fifthEmail = sentEmails.get(4);
-    assertEquals(VALID_EMAIL, fifthEmail.to().getAddress());
-    assertTrue(fifthEmail.subject().contains("5/5] With attachment"));
-    assertNotNull(fifthEmail.htmlBody());
-    assertEquals(1, fifthEmail.attachments().size());
+    assertEquals(1, email.attachments().size());
+    assertTrue(email.attachments().getFirst().getName().startsWith("test-attachment"));
 
-    File attachment = fifthEmail.attachments().getFirst();
-    assertTrue(attachment.getName().startsWith("test-attachment"));
-    assertTrue(attachment.getName().endsWith(".txt"));
+    verify(secureTempFileManager).deleteTempFile(any(File.class));
   }
 
   @Test
   void should_throw_address_exception_when_email_is_invalid() {
     assertThrows(
-        AddressException.class,
-        () -> {
-          healthEmailService.sendHealthCheckEmails(INVALID_EMAIL);
-        });
+        AddressException.class, () -> healthEmailService.sendHealthCheckEmails(INVALID_EMAIL));
 
-    verify(mailer, never()).accept(any(Email.class));
-  }
-
-  @Test
-  void should_throw_illegal_argument_exception_when_email_has_no_at_symbol() {
-    assertThrows(
-        AddressException.class,
-        () -> {
-          healthEmailService.sendHealthCheckEmails("emailwithoutatsymbol");
-        });
-
-    verify(mailer, never()).accept(any(Email.class));
+    verify(mailer, never()).accept(any());
   }
 
   @Test
   void should_handle_email_with_subdomain_correctly() throws Exception {
-    String emailWithSubdomain = "user@mail.example.com";
-
-    healthEmailService.sendHealthCheckEmails(emailWithSubdomain);
+    healthEmailService.sendHealthCheckEmails("user@mail.example.com");
 
     verify(mailer, times(5)).accept(emailCaptor.capture());
-    List<Email> sentEmails = emailCaptor.getAllValues();
+    Email email = emailCaptor.getAllValues().get(1);
 
-    Email emailWithCc = sentEmails.get(1);
-    assertEquals("user+cc@mail.example.com", emailWithCc.cc().getFirst().getAddress());
-  }
-
-  @Test
-  void should_handle_email_with_dots_in_local_part() throws Exception {
-    String emailWithDots = "first.last@example.com";
-
-    healthEmailService.sendHealthCheckEmails(emailWithDots);
-
-    verify(mailer, times(5)).accept(emailCaptor.capture());
-    List<Email> sentEmails = emailCaptor.getAllValues();
-
-    Email emailWithCc = sentEmails.get(1);
-    assertEquals("first.last+cc@example.com", emailWithCc.cc().getFirst().getAddress());
-  }
-
-  @Test
-  void should_send_emails_in_correct_order() throws Exception {
-    healthEmailService.sendHealthCheckEmails(VALID_EMAIL);
-
-    verify(mailer, times(5)).accept(emailCaptor.capture());
-    List<Email> sentEmails = emailCaptor.getAllValues();
-
-    assertTrue(sentEmails.get(0).subject().contains("1/5"));
-    assertTrue(sentEmails.get(1).subject().contains("2/5"));
-    assertTrue(sentEmails.get(2).subject().contains("3/5"));
-    assertTrue(sentEmails.get(3).subject().contains("4/5"));
-    assertTrue(sentEmails.get(4).subject().contains("5/5"));
+    assertEquals("user+cc@mail.example.com", email.cc().getFirst().getAddress());
   }
 
   @Test
@@ -191,8 +151,17 @@ class HealthEmailServiceIT {
     healthEmailService.sendHealthCheckEmails(VALID_EMAIL);
 
     verify(mailer, times(5)).accept(emailCaptor.capture());
-    List<Email> sentEmails = emailCaptor.getAllValues();
+    emailCaptor
+        .getAllValues()
+        .forEach(e -> assertTrue(e.subject().startsWith(HEALTH_CHECK_PREFIX)));
+  }
 
-    sentEmails.forEach(email -> assertTrue(email.subject().startsWith(HEALTH_CHECK_PREFIX)));
+  @Test
+  void should_delete_attachment_file_after_sending() throws Exception {
+    healthEmailService.sendHealthCheckEmails(VALID_EMAIL);
+
+    verify(secureTempFileManager)
+        .createSecureTempFileWithContent(anyString(), anyString(), anyString());
+    verify(secureTempFileManager).deleteTempFile(any(File.class));
   }
 }

@@ -8,7 +8,10 @@ import dev.razafindratelo.unfaked.exception.InvalidAuthorizationFormatException;
 import dev.razafindratelo.unfaked.exception.MediaUploadException;
 import dev.razafindratelo.unfaked.exception.MissingAuthorizationException;
 import dev.razafindratelo.unfaked.exception.ResourceDuplicatedException;
+import dev.razafindratelo.unfaked.exception.SearchException;
 import dev.razafindratelo.unfaked.exception.TemplateLoadingException;
+import dev.razafindratelo.unfaked.exception.bucket.BucketHealthCheckException;
+import dev.razafindratelo.unfaked.exception.bucket.BucketOperationException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ConstraintViolationException;
 import java.util.stream.Collectors;
@@ -49,6 +52,34 @@ public class ApiExceptionHandler {
     return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
   }
 
+  @ExceptionHandler(BucketHealthCheckException.class)
+  public ResponseEntity<ErrorResponse> handleBucketHealthCheckException(
+      BucketHealthCheckException ex, WebRequest request) {
+
+    var errorResponse =
+        ErrorResponse.of(
+            HttpStatus.SERVICE_UNAVAILABLE,
+            ex.getMessage(),
+            getRequestPath(request),
+            ex.getErrorCode());
+
+    return new ResponseEntity<>(errorResponse, HttpStatus.SERVICE_UNAVAILABLE);
+  }
+
+  @ExceptionHandler(BucketOperationException.class)
+  public ResponseEntity<ErrorResponse> handleBucketOperationException(
+      BucketOperationException ex, WebRequest request) {
+
+    var errorResponse =
+        ErrorResponse.of(
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            ex.getMessage(),
+            getRequestPath(request),
+            ex.getErrorCode());
+
+    return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+  }
+
   @ExceptionHandler(MissingServletRequestPartException.class)
   public ResponseEntity<ErrorResponse> handleMissingServletRequestPart(
       MissingServletRequestPartException ex, WebRequest request) {
@@ -61,6 +92,20 @@ public class ApiExceptionHandler {
             "MISSING_REQUIRED_PART");
 
     return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+  }
+
+  @ExceptionHandler(SearchException.class)
+  public ResponseEntity<ErrorResponse> handleSearchException(
+      SearchException ex, WebRequest request) {
+
+    var errorResponse =
+        ErrorResponse.of(
+            HttpStatus.BAD_GATEWAY,
+            "Search failed: " + ex.getMessage(),
+            getRequestPath(request),
+            "SEARCH_EXECUTION_FAILED");
+
+    return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
   }
 
   @ExceptionHandler(ConstraintViolationException.class)
