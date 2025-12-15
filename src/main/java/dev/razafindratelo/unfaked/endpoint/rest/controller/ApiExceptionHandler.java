@@ -1,0 +1,364 @@
+package dev.razafindratelo.unfaked.endpoint.rest.controller;
+
+import dev.razafindratelo.unfaked.endpoint.rest.controller.model.ErrorResponse;
+import dev.razafindratelo.unfaked.exception.ApiKeyGenerationException;
+import dev.razafindratelo.unfaked.exception.DirectoryUploadException;
+import dev.razafindratelo.unfaked.exception.HmacCalculationException;
+import dev.razafindratelo.unfaked.exception.InvalidAuthorizationFormatException;
+import dev.razafindratelo.unfaked.exception.MediaUploadException;
+import dev.razafindratelo.unfaked.exception.MissingAuthorizationException;
+import dev.razafindratelo.unfaked.exception.ResourceDuplicatedException;
+import dev.razafindratelo.unfaked.exception.SearchException;
+import dev.razafindratelo.unfaked.exception.TemplateLoadingException;
+import dev.razafindratelo.unfaked.exception.bucket.BucketHealthCheckException;
+import dev.razafindratelo.unfaked.exception.bucket.BucketOperationException;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.validation.ConstraintViolationException;
+import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.authorization.AuthorizationDeniedException;
+import org.springframework.validation.FieldError;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.context.request.ServletWebRequest;
+import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
+
+@ControllerAdvice
+@Slf4j
+@RequiredArgsConstructor
+public class ApiExceptionHandler {
+
+  @ExceptionHandler(MissingServletRequestParameterException.class)
+  public ResponseEntity<ErrorResponse> handleMissingServletRequestParameter(
+      MissingServletRequestParameterException ex, WebRequest request) {
+
+    var errorResponse =
+        ErrorResponse.of(
+            HttpStatus.BAD_REQUEST,
+            "Required parameter '" + ex.getParameterName() + "' is missing",
+            getRequestPath(request),
+            "MISSING_REQUIRED_PARAMETER");
+
+    return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+  }
+
+  @ExceptionHandler(BucketHealthCheckException.class)
+  public ResponseEntity<ErrorResponse> handleBucketHealthCheckException(
+      BucketHealthCheckException ex, WebRequest request) {
+
+    var errorResponse =
+        ErrorResponse.of(
+            HttpStatus.SERVICE_UNAVAILABLE,
+            ex.getMessage(),
+            getRequestPath(request),
+            ex.getErrorCode());
+
+    return new ResponseEntity<>(errorResponse, HttpStatus.SERVICE_UNAVAILABLE);
+  }
+
+  @ExceptionHandler(BucketOperationException.class)
+  public ResponseEntity<ErrorResponse> handleBucketOperationException(
+      BucketOperationException ex, WebRequest request) {
+
+    var errorResponse =
+        ErrorResponse.of(
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            ex.getMessage(),
+            getRequestPath(request),
+            ex.getErrorCode());
+
+    return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+  }
+
+  @ExceptionHandler(MissingServletRequestPartException.class)
+  public ResponseEntity<ErrorResponse> handleMissingServletRequestPart(
+      MissingServletRequestPartException ex, WebRequest request) {
+
+    var errorResponse =
+        ErrorResponse.of(
+            HttpStatus.BAD_REQUEST,
+            "Required part '" + ex.getRequestPartName() + "' is not present",
+            getRequestPath(request),
+            "MISSING_REQUIRED_PART");
+
+    return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+  }
+
+  @ExceptionHandler(SearchException.class)
+  public ResponseEntity<ErrorResponse> handleSearchException(
+      SearchException ex, WebRequest request) {
+
+    var errorResponse =
+        ErrorResponse.of(
+            HttpStatus.BAD_GATEWAY,
+            "Search failed: " + ex.getMessage(),
+            getRequestPath(request),
+            "SEARCH_EXECUTION_FAILED");
+
+    return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+  }
+
+  @ExceptionHandler(ConstraintViolationException.class)
+  public ResponseEntity<ErrorResponse> handleConstraintViolationException(
+      ConstraintViolationException ex, WebRequest request) {
+
+    String message =
+        ex.getConstraintViolations().stream()
+            .map(violation -> violation.getPropertyPath() + ": " + violation.getMessage())
+            .collect(Collectors.joining(", "));
+
+    var errorResponse =
+        ErrorResponse.of(
+            HttpStatus.BAD_REQUEST, message, getRequestPath(request), "INVALID_PARAMETER");
+
+    return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+  }
+
+  @ExceptionHandler(HttpMessageNotReadableException.class)
+  public ResponseEntity<ErrorResponse> handleHttpMessageNotReadable(
+      HttpMessageNotReadableException ex, WebRequest request) {
+
+    var errorResponse =
+        ErrorResponse.of(
+            HttpStatus.BAD_REQUEST,
+            "Malformed JSON request",
+            getRequestPath(request),
+            "MALFORMED_JSON");
+
+    return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+  }
+
+  @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+  public ResponseEntity<ErrorResponse> handleMethodNotSupported(
+      HttpRequestMethodNotSupportedException ex, WebRequest request) {
+
+    var errorResponse =
+        ErrorResponse.of(
+            HttpStatus.METHOD_NOT_ALLOWED,
+            "HTTP method not supported for this endpoint",
+            getRequestPath(request),
+            "METHOD_NOT_ALLOWED");
+
+    return new ResponseEntity<>(errorResponse, HttpStatus.METHOD_NOT_ALLOWED);
+  }
+
+  @ExceptionHandler(AuthorizationDeniedException.class)
+  public ResponseEntity<ErrorResponse> handleAuthorizationDeniedException(
+      AuthorizationDeniedException ex, WebRequest request) {
+    var errorResponse =
+        ErrorResponse.of(
+            HttpStatus.FORBIDDEN, ex.getMessage(), getRequestPath(request), "AUTHORIZATION_DENIED");
+    return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
+  }
+
+  @ExceptionHandler(ResourceDuplicatedException.class)
+  public ResponseEntity<ErrorResponse> handleResourceDuplicated(
+      ResourceDuplicatedException ex, WebRequest request) {
+
+    var errorResponse =
+        ErrorResponse.of(
+            HttpStatus.CONFLICT, ex.getMessage(), getRequestPath(request), "RESOURCE_DUPLICATED");
+
+    return new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT);
+  }
+
+  @ExceptionHandler(DataIntegrityViolationException.class)
+  public ResponseEntity<ErrorResponse> handleDataIntegrityViolation(
+      DataIntegrityViolationException ex, WebRequest request) {
+
+    String userMessage = "A conflict occurred with existing data";
+    String errorCode = "DATA_CONFLICT";
+
+    Throwable rootCause = ex.getRootCause();
+
+    if (rootCause != null) {
+      String errorMessage = rootCause.getMessage().toLowerCase();
+
+      if (errorMessage.contains("email")
+          && (errorMessage.contains("unique") || errorMessage.contains("duplicate"))) {
+        userMessage = "Email already exists";
+        errorCode = "DUPLICATE_EMAIL";
+      } else if (errorMessage.contains("clerk_id")
+          || errorMessage.contains("clerk")
+              && (errorMessage.contains("unique") || errorMessage.contains("duplicate"))) {
+        userMessage = "Clerk ID already exists";
+        errorCode = "DUPLICATE_CLERK_ID";
+      }
+    }
+
+    var errorResponse =
+        ErrorResponse.of(HttpStatus.CONFLICT, userMessage, getRequestPath(request), errorCode);
+
+    return new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT);
+  }
+
+  @ExceptionHandler(DirectoryUploadException.class)
+  public ResponseEntity<ErrorResponse> handleDirectoryUploadException(
+      DirectoryUploadException ex, WebRequest request) {
+
+    log.error("Directory upload failed: {}", ex.getMessage(), ex);
+
+    var errorResponse =
+        ErrorResponse.of(
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            ex.getMessage(),
+            getRequestPath(request),
+            "DIRECTORY_UPLOAD_FAILED");
+
+    return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+  }
+
+  @ExceptionHandler(TemplateLoadingException.class)
+  public ResponseEntity<ErrorResponse> handleTemplateLoadingException(
+      TemplateLoadingException ex, WebRequest request) {
+
+    log.error("Template loading failed: {}", ex.getMessage(), ex);
+
+    var errorResponse =
+        ErrorResponse.of(
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            ex.getMessage(),
+            getRequestPath(request),
+            "TEMPLATE_LOADING_FAILED");
+
+    return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+  }
+
+  @ExceptionHandler(ApiKeyGenerationException.class)
+  public ResponseEntity<ErrorResponse> handleApiKeyGenerationException(
+      ApiKeyGenerationException ex, WebRequest request) {
+
+    log.error("API key generation failed: {}", ex.getMessage(), ex);
+
+    var errorResponse =
+        ErrorResponse.of(
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            ex.getMessage(),
+            getRequestPath(request),
+            "API_KEY_GENERATION_FAILED");
+
+    return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+  }
+
+  @ExceptionHandler(HmacCalculationException.class)
+  public ResponseEntity<ErrorResponse> handleHmacCalculationException(
+      HmacCalculationException ex, WebRequest request) {
+
+    log.error("HmacCalculationException : {}", ex.getMessage(), ex);
+
+    var errorResponse =
+        ErrorResponse.of(
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            ex.getMessage(),
+            getRequestPath(request),
+            "HMAC_CALCULATION_FAILED");
+
+    return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+  }
+
+  @ExceptionHandler(EntityNotFoundException.class)
+  public ResponseEntity<ErrorResponse> handleEntityNotFoundException(
+      EntityNotFoundException ex, WebRequest request) {
+    var errorResponse =
+        ErrorResponse.of(
+            HttpStatus.NOT_FOUND, ex.getMessage(), getRequestPath(request), "ENTITY_NOT_FOUND");
+    return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+  }
+
+  @ExceptionHandler(MethodArgumentNotValidException.class)
+  public ResponseEntity<ErrorResponse> handleValidationExceptions(
+      MethodArgumentNotValidException ex, WebRequest request) {
+
+    String message =
+        ex.getBindingResult().getFieldErrors().stream()
+            .findFirst()
+            .map(FieldError::getDefaultMessage)
+            .orElse("Validation failed");
+
+    var errorResponse =
+        ErrorResponse.of(HttpStatus.BAD_REQUEST, message, getRequestPath(request), "BAD_FORM");
+
+    return ResponseEntity.badRequest().body(errorResponse);
+  }
+
+  @ExceptionHandler(MissingAuthorizationException.class)
+  public ResponseEntity<ErrorResponse> handleMissingAuthorization(
+      MissingAuthorizationException ex, WebRequest request) {
+    var errorResponse =
+        ErrorResponse.of(
+            HttpStatus.UNAUTHORIZED,
+            ex.getMessage(),
+            getRequestPath(request),
+            "MISSING_AUTHORIZATION");
+    return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
+  }
+
+  @ExceptionHandler(InvalidAuthorizationFormatException.class)
+  public ResponseEntity<ErrorResponse> handleInvalidAuthorizationFormat(
+      InvalidAuthorizationFormatException ex, WebRequest request) {
+    var errorResponse =
+        ErrorResponse.of(
+            HttpStatus.BAD_REQUEST,
+            ex.getMessage(),
+            getRequestPath(request),
+            "INVALID_AUTHORIZATION_FORMAT");
+    return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+  }
+
+  @ExceptionHandler(Exception.class)
+  public ResponseEntity<ErrorResponse> handleGenericException(Exception ex, WebRequest request) {
+    log.error("Unexpected error occurred: {}", ex.getMessage(), ex);
+
+    var errorResponse =
+        ErrorResponse.of(
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "An internal server error occurred",
+            getRequestPath(request),
+            "INTERNAL_SERVER_ERROR");
+    return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+  }
+
+  @ExceptionHandler(HandlerMethodValidationException.class)
+  public ResponseEntity<ErrorResponse> handleHandlerMethodValidationException(
+      HandlerMethodValidationException ex, WebRequest request) {
+
+    var errorResponse =
+        ErrorResponse.of(
+            HttpStatus.BAD_REQUEST, ex.getMessage(), getRequestPath(request), "VALIDATION_ERROR");
+
+    return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+  }
+
+  @ExceptionHandler(MediaUploadException.class)
+  public ResponseEntity<ErrorResponse> handleMediaUploadException(
+      MediaUploadException ex, WebRequest request) {
+
+    log.error("Media upload failed: {}", ex.getMessage(), ex);
+
+    var errorResponse =
+        ErrorResponse.of(
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            ex.getMessage(),
+            getRequestPath(request),
+            "MEDIA_UPLOAD_FAILED");
+
+    return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+  }
+
+  private String getRequestPath(WebRequest request) {
+    if (request instanceof ServletWebRequest servletWebRequest)
+      return servletWebRequest.getRequest().getRequestURI();
+
+    return "N/A";
+  }
+}

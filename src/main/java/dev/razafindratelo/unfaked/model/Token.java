@@ -1,0 +1,13 @@
+package dev.razafindratelo.unfaked.model;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import java.time.LocalDate;
+import lombok.Builder;
+
+@Builder
+public record Token(
+    @NotNull @NotBlank String id,
+    @NotNull User owner,
+    @NotNull @NotBlank String token,
+    LocalDate expirationDate) {}
