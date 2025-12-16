@@ -1,11 +1,10 @@
 package dev.razafindratelo.unfaked.event.model;
 
-import static java.lang.Math.random;
-
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import dev.razafindratelo.unfaked.InfraGenerated;
 import java.io.Serializable;
 import java.time.Duration;
+import java.util.Random;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -14,6 +13,7 @@ import lombok.Setter;
 public abstract class InfraEvent implements Serializable {
 
   private static final int MAX_HANDLER_INIT_DURATION_IN_SECOND = 90;
+  private static final Random RANDOM = new Random();
   @Getter @Setter protected int attemptNb;
 
   public abstract Duration maxConsumerDuration();
@@ -27,8 +27,7 @@ public abstract class InfraEvent implements Serializable {
   public final Duration randomVisibilityTimeout() {
     return eventHandlerInitMaxDuration()
         .plus(maxConsumerDuration())
-        .plus(
-            Duration.ofSeconds((long) (random() * maxConsumerBackoffBetweenRetries().toSeconds())));
+        .plus(Duration.ofSeconds(RANDOM.nextLong(maxConsumerBackoffBetweenRetries().toSeconds())));
   }
 
   public String getEventSource() {

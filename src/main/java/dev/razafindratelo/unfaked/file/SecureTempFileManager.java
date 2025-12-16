@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.Set;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -28,11 +29,14 @@ import org.springframework.stereotype.Component;
  */
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class SecureTempFileManager {
 
   private static final String POSIX_OWNER_ONLY_PERMISSIONS = "rw-------";
   private static final String DEFAULT_PREFIX = "temp-";
   private static final String DEFAULT_SUFFIX = ".tmp";
+
+  private final TempFileCleaner tempFileCleaner;
 
   /**
    * Creates a secure temporary file with default prefix and suffix.
@@ -90,7 +94,6 @@ public class SecureTempFileManager {
       log.debug("Written {} bytes to secure temp file: {}", content.length(), tempFile.toPath());
       return tempFile;
     } catch (IOException e) {
-      // Clean up on failure
       deleteTempFile(tempFile);
       throw e;
     }
@@ -119,31 +122,14 @@ public class SecureTempFileManager {
   }
 
   /**
-   * Safely deletes a temporary file. This method handles null files and non-existent files
-   * gracefully without throwing exceptions.
+   * Safely deletes a temporary file using the TempFileCleaner component. This method delegates to
+   * TempFileCleaner which handles null files, non-existent files, and proper logging with OWASP
+   * encoding.
    *
    * @param file the file to delete, can be null
-   * @return true if the file was successfully deleted, false otherwise
    */
-  public boolean deleteTempFile(File file) {
-    if (file == null) {
-      log.debug("Attempted to delete null file, skipping");
-      return false;
-    }
-
-    if (!file.exists()) {
-      log.debug("File does not exist, skipping deletion: {}", file.getAbsolutePath());
-      return false;
-    }
-
-    try {
-      Files.delete(file.toPath());
-      log.debug("Successfully deleted temporary file: {}", file.getAbsolutePath());
-      return true;
-    } catch (IOException e) {
-      log.warn("Failed to delete temporary file: {}", file.getAbsolutePath(), e);
-      return false;
-    }
+  public void deleteTempFile(File file) {
+    tempFileCleaner.cleanUp(file);
   }
 
   /**

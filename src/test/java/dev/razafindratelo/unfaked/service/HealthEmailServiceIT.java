@@ -16,6 +16,7 @@ import dev.razafindratelo.unfaked.InfraGenerated;
 import dev.razafindratelo.unfaked.file.SecureTempFileManager;
 import dev.razafindratelo.unfaked.mail.Email;
 import dev.razafindratelo.unfaked.mail.Mailer;
+import dev.razafindratelo.unfaked.service.health.HealthEmailService;
 import jakarta.mail.internet.AddressException;
 import java.io.File;
 import java.io.IOException;
@@ -37,6 +38,7 @@ class HealthEmailServiceIT {
   private static final String VALID_EMAIL = "test@example.com";
   private static final String INVALID_EMAIL = "invalid-email";
   private static final String HEALTH_CHECK_PREFIX = "[unfaked health check";
+  private static final String TEST_ATTACHMENT = "test-attachment-12345.txt";
 
   @TempDir Path tempDir;
 
@@ -49,8 +51,9 @@ class HealthEmailServiceIT {
 
   @BeforeEach
   void setUp() throws Exception {
-    File mockAttachment = tempDir.resolve("test-attachment-12345.txt").toFile();
-    if (!mockAttachment.createNewFile()) {
+    File mockAttachment = tempDir.resolve(TEST_ATTACHMENT).toFile();
+    boolean created = mockAttachment.createNewFile();
+    if (!created) {
       throw new IOException("Failed to create test attachment file");
     }
 
@@ -59,8 +62,6 @@ class HealthEmailServiceIT {
             secureTempFileManager.createSecureTempFileWithContent(
                 anyString(), anyString(), anyString()))
         .thenReturn(mockAttachment);
-
-    lenient().when(secureTempFileManager.deleteTempFile(any(File.class))).thenReturn(true);
   }
 
   @Test

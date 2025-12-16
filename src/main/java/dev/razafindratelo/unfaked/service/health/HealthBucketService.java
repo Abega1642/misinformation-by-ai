@@ -1,4 +1,4 @@
-package dev.razafindratelo.unfaked.service;
+package dev.razafindratelo.unfaked.service.health;
 
 import static java.util.UUID.randomUUID;
 import static org.owasp.encoder.Encode.forJava;

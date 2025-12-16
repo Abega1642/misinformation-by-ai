@@ -18,6 +18,7 @@ import dev.razafindratelo.unfaked.exception.bucket.BucketDirectoryUploadExceptio
 import dev.razafindratelo.unfaked.exception.bucket.BucketHealthCheckException;
 import dev.razafindratelo.unfaked.file.BucketComponent;
 import dev.razafindratelo.unfaked.file.SecureTempFileManager;
+import dev.razafindratelo.unfaked.service.health.HealthBucketService;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;

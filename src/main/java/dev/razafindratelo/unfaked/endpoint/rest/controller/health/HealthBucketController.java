@@ -1,7 +1,7 @@
 package dev.razafindratelo.unfaked.endpoint.rest.controller.health;
 
 import dev.razafindratelo.unfaked.InfraGenerated;
-import dev.razafindratelo.unfaked.service.HealthBucketService;
+import dev.razafindratelo.unfaked.service.health.HealthBucketService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;

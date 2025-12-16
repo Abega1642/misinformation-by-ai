@@ -2,6 +2,7 @@ package dev.razafindratelo.unfaked.file;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import dev.razafindratelo.unfaked.InfraGenerated;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -14,19 +15,28 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledOnOs;
 import org.junit.jupiter.api.condition.OS;
 
+@InfraGenerated
 class SecureTempFileManagerTest {
 
   private static final String TEST_PREFIX = "test-";
   private static final String TEST_SUFFIX = ".txt";
   private static final String TEST_CONTENT = "Test content for secure file";
   private static final byte[] TEST_BYTES = "Binary test content".getBytes();
+  private static final String MIN_PREFIX = "abc";
+  private static final String SHORT_PREFIX = "ab";
+  private static final String EMPTY_SUFFIX = "";
+  private static final String SPECIAL_CONTENT =
+      "Special chars: €, ñ, 中文, emoji: 🔒, newlines:\n\ttabs\r\n";
+  private static final int LARGE_CONTENT_SIZE = 10_000;
 
+  private final TempFileCleaner tempFileCleaner = new TempFileCleaner();
   private SecureTempFileManager manager;
   private File createdFile;
 
   @BeforeEach
   void setUp() {
-    manager = new SecureTempFileManager();
+
+    manager = new SecureTempFileManager(tempFileCleaner);
     createdFile = null;
   }
 
@@ -124,23 +134,20 @@ class SecureTempFileManagerTest {
     createdFile = manager.createSecureTempFile(TEST_PREFIX, TEST_SUFFIX);
     assertTrue(createdFile.exists());
 
-    boolean deleted = manager.deleteTempFile(createdFile);
+    manager.deleteTempFile(createdFile);
 
-    assertTrue(deleted);
     assertFalse(createdFile.exists());
   }
 
   @Test
-  void should_return_false_when_deleting_null_file() {
-    boolean deleted = manager.deleteTempFile(null);
-    assertFalse(deleted);
+  void should_handle_deleting_null_file() {
+    manager.deleteTempFile(null);
   }
 
   @Test
-  void should_return_false_when_deleting_non_existent_file() {
+  void should_handle_deleting_non_existent_file() {
     File nonExistentFile = new File("/tmp/non-existent-file-" + System.currentTimeMillis());
-    boolean deleted = manager.deleteTempFile(nonExistentFile);
-    assertFalse(deleted);
+    manager.deleteTempFile(nonExistentFile);
   }
 
   @Test
@@ -154,12 +161,10 @@ class SecureTempFileManagerTest {
 
   @Test
   void should_throw_exception_when_prefix_is_too_short() {
-    String shortPrefix = "ab";
-
     IllegalArgumentException exception =
         assertThrows(
             IllegalArgumentException.class,
-            () -> manager.createSecureTempFile(shortPrefix, TEST_SUFFIX));
+            () -> manager.createSecureTempFile(SHORT_PREFIX, TEST_SUFFIX));
 
     assertEquals("Prefix must be at least 3 characters long", exception.getMessage());
   }
@@ -175,8 +180,7 @@ class SecureTempFileManagerTest {
 
   @Test
   void should_accept_empty_suffix() throws IOException {
-    String emptySuffix = "";
-    createdFile = manager.createSecureTempFile(TEST_PREFIX, emptySuffix);
+    createdFile = manager.createSecureTempFile(TEST_PREFIX, EMPTY_SUFFIX);
 
     assertNotNull(createdFile);
     assertTrue(createdFile.exists());
@@ -185,8 +189,7 @@ class SecureTempFileManagerTest {
 
   @Test
   void should_accept_minimum_valid_prefix_length() throws IOException {
-    String minPrefix = "abc";
-    createdFile = manager.createSecureTempFile(minPrefix, TEST_SUFFIX);
+    createdFile = manager.createSecureTempFile(MIN_PREFIX, TEST_SUFFIX);
 
     assertNotNull(createdFile);
     assertTrue(createdFile.exists());
@@ -243,17 +246,13 @@ class SecureTempFileManagerTest {
     assertThrows(
         NullPointerException.class,
         () -> manager.createSecureTempFileWithContent(TEST_PREFIX, TEST_SUFFIX, invalidContent));
-
-    // Verify no orphaned files were created by checking temp directory
-    // This is a best-effort verification
   }
 
   @Test
   void should_handle_large_content() throws IOException {
     StringBuilder largeContent = new StringBuilder();
-    int largeSize = 10_000;
 
-    for (int i = 0; i < largeSize; i++) {
+    for (int i = 0; i < LARGE_CONTENT_SIZE; i++) {
       largeContent.append("Line ").append(i).append("\n");
     }
 
@@ -270,14 +269,14 @@ class SecureTempFileManagerTest {
 
   @Test
   void should_handle_special_characters_in_content() throws IOException {
-    String specialContent = "Special chars: €, ñ, 中文, emoji: 🔒, newlines:\n\ttabs\r\n";
-    createdFile = manager.createSecureTempFileWithContent(TEST_PREFIX, TEST_SUFFIX, specialContent);
+    createdFile =
+        manager.createSecureTempFileWithContent(TEST_PREFIX, TEST_SUFFIX, SPECIAL_CONTENT);
 
     assertNotNull(createdFile);
     assertTrue(createdFile.exists());
 
     String actualContent = Files.readString(createdFile.toPath());
-    assertEquals(specialContent, actualContent);
+    assertEquals(SPECIAL_CONTENT, actualContent);
   }
 
   @Test

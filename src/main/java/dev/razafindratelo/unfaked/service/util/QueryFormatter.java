@@ -49,9 +49,7 @@ public class QueryFormatter {
           "Original input: {} | Optimized query: {}",
           forJava(sanitizedInput),
           forJava(cleanedQuery));
-
       return cleanedQuery;
-
     } catch (Exception ex) {
       log.error(
           "Query formatting failed, falling back to sanitized input: {}",
@@ -70,7 +68,32 @@ public class QueryFormatter {
   }
 
   private String cleanQuery(String query) {
-    return query.trim().replaceAll("^[\"']+|[\"']+$", "").replaceAll("\\s+", " ");
+    String trimmed = query.trim();
+    String withoutLeadingQuotes = removeLeadingQuotes(trimmed);
+    String withoutTrailingQuotes = removeTrailingQuotes(withoutLeadingQuotes);
+    return normalizeSpaces(withoutTrailingQuotes);
+  }
+
+  private String removeLeadingQuotes(String text) {
+    String result = text;
+    while (!result.isEmpty() && (result.charAt(0) == '"' || result.charAt(0) == '\'')) {
+      result = result.substring(1);
+    }
+    return result;
+  }
+
+  private String removeTrailingQuotes(String text) {
+    String result = text;
+    while (!result.isEmpty()
+        && (result.charAt(result.length() - 1) == '"'
+            || result.charAt(result.length() - 1) == '\'')) {
+      result = result.substring(0, result.length() - 1);
+    }
+    return result;
+  }
+
+  private String normalizeSpaces(String text) {
+    return text.replaceAll("\\s+", " ");
   }
 
   private String fallbackFormat(String input) {

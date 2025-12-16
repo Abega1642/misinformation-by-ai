@@ -3,6 +3,7 @@ package dev.razafindratelo.unfaked.file;
 import static org.owasp.encoder.Encode.forJava;
 
 import dev.razafindratelo.unfaked.InfraGenerated;
+import dev.razafindratelo.unfaked.exception.MultipartFileConversionException;
 import java.io.File;
 import java.io.IOException;
 import java.util.function.Function;
@@ -33,7 +34,7 @@ public class MultipartFileConverter implements Function<MultipartFile, File> {
    *
    * @param multipartFile the multipart file to convert
    * @return a secure temporary file containing the multipart file data
-   * @throws RuntimeException if conversion fails
+   * @throws MultipartFileConversionException if conversion fails
    */
   @Override
   public File apply(MultipartFile multipartFile) {
@@ -51,7 +52,7 @@ public class MultipartFileConverter implements Function<MultipartFile, File> {
 
     } catch (IOException e) {
       log.error("Failed to convert multipart file: filename={}", forJava(originalFilename), e);
-      throw new RuntimeException("Failed to convert multipart file", e);
+      throw new MultipartFileConversionException("Failed to convert multipart file", e);
     }
   }
 
