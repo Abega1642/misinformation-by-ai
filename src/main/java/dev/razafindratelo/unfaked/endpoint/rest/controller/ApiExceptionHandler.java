@@ -1,5 +1,8 @@
 package dev.razafindratelo.unfaked.endpoint.rest.controller;
 
+import static java.lang.String.format;
+import static org.owasp.encoder.Encode.forJava;
+
 import dev.razafindratelo.unfaked.endpoint.rest.controller.model.ErrorResponse;
 import dev.razafindratelo.unfaked.exception.ApiKeyGenerationException;
 import dev.razafindratelo.unfaked.exception.DirectoryUploadException;
@@ -46,7 +49,7 @@ public class ApiExceptionHandler {
     var errorResponse =
         ErrorResponse.of(
             HttpStatus.BAD_REQUEST,
-            "Required parameter '" + ex.getParameterName() + "' is missing",
+            format("Required parameter '%s' is missing", ex.getParameterName()),
             getRequestPath(request),
             "MISSING_REQUIRED_PARAMETER");
 
@@ -73,12 +76,12 @@ public class ApiExceptionHandler {
 
     log.error(
         "Email health check failed at path: {}, test case: {}",
-        getRequestPath(request),
-        ex.getTestCaseName(),
+        forJava(getRequestPath(request)),
+        forJava(ex.getTestCaseName()),
         ex);
 
     String errorMessage =
-        String.format(
+        format(
             "Email health check failed at test case '%s': %s",
             ex.getTestCaseName(),
             ex.getCause() != null ? ex.getCause().getMessage() : ex.getMessage());
