@@ -1,7 +1,7 @@
 package dev.razafindratelo.unfaked.endpoint.rest.controller.health;
 
 import dev.razafindratelo.unfaked.InfraGenerated;
-import dev.razafindratelo.unfaked.service.HealthEventService;
+import dev.razafindratelo.unfaked.service.health.HealthEventService;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;

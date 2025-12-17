@@ -2,6 +2,7 @@ package dev.razafindratelo.unfaked.mail;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import dev.razafindratelo.unfaked.InfraGenerated;
 import dev.razafindratelo.unfaked.conf.FacadeIT;
 import jakarta.mail.internet.InternetAddress;
 import java.io.File;
@@ -15,6 +16,7 @@ import org.junit.jupiter.api.io.TempDir;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.javamail.JavaMailSender;
 
+@InfraGenerated
 class MailerIT extends FacadeIT {
 
   @TempDir Path tempDir;

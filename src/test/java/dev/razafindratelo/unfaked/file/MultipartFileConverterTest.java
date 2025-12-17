@@ -8,6 +8,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import dev.razafindratelo.unfaked.InfraGenerated;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -15,11 +16,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.web.multipart.MultipartFile;
 
+@InfraGenerated
 class MultipartFileConverterTest {
 
   private static final String TEST_CONTENT = "test file content";
   private static final String VALID_FILENAME = "document.pdf";
-  private final SecureTempFileManager TEMP_FILE_MANAGER = new SecureTempFileManager();
+  private final TempFileCleaner cleaner = new TempFileCleaner();
+  private final SecureTempFileManager TEMP_FILE_MANAGER = new SecureTempFileManager(cleaner);
   private MultipartFileConverter converter;
 
   @BeforeEach

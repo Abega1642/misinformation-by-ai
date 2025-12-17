@@ -80,7 +80,7 @@ public class MultipartFileToMediaConverter implements BiFunction<MultipartFile, 
     int maxInd = 255;
     return filename
         .replaceAll("[^a-zA-Z0-9._-]", "_")
-        .replaceAll("\\.\\.", "")
+        .replace("..", "")
         .substring(0, Math.min(filename.length(), maxInd));
   }
 }

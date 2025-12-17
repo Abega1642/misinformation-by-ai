@@ -58,7 +58,7 @@ public class FilenameSanitizer implements UnaryOperator<String> {
       if (StringUtils.isBlank(sanitized)) return handleInvalidResult();
 
     } else {
-      sanitized = sanitized.replaceAll("\\.\\.", EMPTY);
+      sanitized = sanitized.replace("..", EMPTY);
       sanitized = removeMaliciousSeparators(sanitized);
     }
 

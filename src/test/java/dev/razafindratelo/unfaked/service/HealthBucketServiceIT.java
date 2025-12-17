@@ -18,6 +18,7 @@ import dev.razafindratelo.unfaked.exception.bucket.BucketDirectoryUploadExceptio
 import dev.razafindratelo.unfaked.exception.bucket.BucketHealthCheckException;
 import dev.razafindratelo.unfaked.file.BucketComponent;
 import dev.razafindratelo.unfaked.file.SecureTempFileManager;
+import dev.razafindratelo.unfaked.service.health.HealthBucketService;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -51,12 +52,14 @@ class HealthBucketServiceIT {
 
   @Test
   void should_complete_health_check_successfully() throws IOException {
-    File uploadFile = createTempFile("upload.txt", TEST_CONTENT);
-    File downloadFile = createTempFile("download.txt", TEST_CONTENT);
-    File dirUploadFile = createTempFile("dir-upload.txt", TEST_CONTENT);
-    File finalUploadFile = createTempFile("final-upload.txt", TEST_CONTENT);
+    File uploadFile = createTempFile("upload.txt");
+    File downloadFile = createTempFile("download.txt");
+    File dirUploadFile = createTempFile("dir-upload.txt");
+    File finalUploadFile = createTempFile("final-upload.txt");
+    File tempDirectory = createTempDirectory();
     URL expectedUrl = createTestUrl();
 
+    when(secureTempFileManager.createSecureTempDirectory(anyString())).thenReturn(tempDirectory);
     when(secureTempFileManager.createSecureTempFileWithContent(
             anyString(), anyString(), anyString()))
         .thenReturn(uploadFile, dirUploadFile, finalUploadFile);
@@ -93,11 +96,13 @@ class HealthBucketServiceIT {
 
   @Test
   void should_throw_exception_when_presign_fails() throws IOException {
-    File uploadFile = createTempFile("upload.txt", TEST_CONTENT);
-    File downloadFile = createTempFile("download.txt", TEST_CONTENT);
-    File dirUploadFile = createTempFile("dir-upload.txt", TEST_CONTENT);
-    File finalUploadFile = createTempFile("final-upload.txt", TEST_CONTENT);
+    File uploadFile = createTempFile("upload.txt");
+    File downloadFile = createTempFile("download.txt");
+    File dirUploadFile = createTempFile("dir-upload.txt");
+    File finalUploadFile = createTempFile("final-upload.txt");
+    File tempDirectory = createTempDirectory();
 
+    when(secureTempFileManager.createSecureTempDirectory(anyString())).thenReturn(tempDirectory);
     when(secureTempFileManager.createSecureTempFileWithContent(
             anyString(), anyString(), anyString()))
         .thenReturn(uploadFile, dirUploadFile, finalUploadFile);
@@ -114,12 +119,14 @@ class HealthBucketServiceIT {
 
   @Test
   void should_cleanup_files_after_successful_operations() throws IOException {
-    File uploadFile = createTempFile("upload.txt", TEST_CONTENT);
-    File downloadFile = createTempFile("download.txt", TEST_CONTENT);
-    File dirUploadFile = createTempFile("dir-upload.txt", TEST_CONTENT);
-    File finalUploadFile = createTempFile("final-upload.txt", TEST_CONTENT);
+    File uploadFile = createTempFile("upload.txt");
+    File downloadFile = createTempFile("download.txt");
+    File dirUploadFile = createTempFile("dir-upload.txt");
+    File finalUploadFile = createTempFile("final-upload.txt");
+    File tempDirectory = createTempDirectory();
     URL expectedUrl = createTestUrl();
 
+    when(secureTempFileManager.createSecureTempDirectory(anyString())).thenReturn(tempDirectory);
     when(secureTempFileManager.createSecureTempFileWithContent(
             anyString(), anyString(), anyString()))
         .thenReturn(uploadFile, dirUploadFile, finalUploadFile);
@@ -134,7 +141,7 @@ class HealthBucketServiceIT {
 
   @Test
   void should_cleanup_files_even_when_upload_fails() throws IOException {
-    File uploadFile = createTempFile("upload.txt", TEST_CONTENT);
+    File uploadFile = createTempFile("upload.txt");
 
     when(secureTempFileManager.createSecureTempFileWithContent(
             anyString(), anyString(), anyString()))
@@ -151,12 +158,14 @@ class HealthBucketServiceIT {
 
   @Test
   void should_cleanup_downloaded_file_after_validation() throws IOException {
-    File uploadFile = createTempFile("upload.txt", TEST_CONTENT);
-    File downloadFile = createTempFile("download.txt", TEST_CONTENT);
-    File dirUploadFile = createTempFile("dir-upload.txt", TEST_CONTENT);
-    File finalUploadFile = createTempFile("final-upload.txt", TEST_CONTENT);
+    File uploadFile = createTempFile("upload.txt");
+    File downloadFile = createTempFile("download.txt");
+    File dirUploadFile = createTempFile("dir-upload.txt");
+    File finalUploadFile = createTempFile("final-upload.txt");
+    File tempDirectory = createTempDirectory();
     URL expectedUrl = createTestUrl();
 
+    when(secureTempFileManager.createSecureTempDirectory(anyString())).thenReturn(tempDirectory);
     when(secureTempFileManager.createSecureTempFileWithContent(
             anyString(), anyString(), anyString()))
         .thenReturn(uploadFile, dirUploadFile, finalUploadFile);
@@ -171,12 +180,14 @@ class HealthBucketServiceIT {
 
   @Test
   void should_use_correct_bucket_key_format() throws IOException {
-    File uploadFile = createTempFile("upload.txt", TEST_CONTENT);
-    File downloadFile = createTempFile("download.txt", TEST_CONTENT);
-    File dirUploadFile = createTempFile("dir-upload.txt", TEST_CONTENT);
-    File finalUploadFile = createTempFile("final-upload.txt", TEST_CONTENT);
+    File uploadFile = createTempFile("upload.txt");
+    File downloadFile = createTempFile("download.txt");
+    File dirUploadFile = createTempFile("dir-upload.txt");
+    File finalUploadFile = createTempFile("final-upload.txt");
+    File tempDirectory = createTempDirectory();
     URL expectedUrl = createTestUrl();
 
+    when(secureTempFileManager.createSecureTempDirectory(anyString())).thenReturn(tempDirectory);
     when(secureTempFileManager.createSecureTempFileWithContent(
             anyString(), anyString(), anyString()))
         .thenReturn(uploadFile, dirUploadFile, finalUploadFile);
@@ -194,12 +205,14 @@ class HealthBucketServiceIT {
 
   @Test
   void should_use_correct_presign_duration() throws IOException {
-    File uploadFile = createTempFile("upload.txt", TEST_CONTENT);
-    File downloadFile = createTempFile("download.txt", TEST_CONTENT);
-    File dirUploadFile = createTempFile("dir-upload.txt", TEST_CONTENT);
-    File finalUploadFile = createTempFile("final-upload.txt", TEST_CONTENT);
+    File uploadFile = createTempFile("upload.txt");
+    File downloadFile = createTempFile("download.txt");
+    File dirUploadFile = createTempFile("dir-upload.txt");
+    File finalUploadFile = createTempFile("final-upload.txt");
+    File tempDirectory = createTempDirectory();
     URL expectedUrl = createTestUrl();
 
+    when(secureTempFileManager.createSecureTempDirectory(anyString())).thenReturn(tempDirectory);
     when(secureTempFileManager.createSecureTempFileWithContent(
             anyString(), anyString(), anyString()))
         .thenReturn(uploadFile, dirUploadFile, finalUploadFile);
@@ -214,12 +227,14 @@ class HealthBucketServiceIT {
 
   @Test
   void should_perform_directory_upload() throws IOException {
-    File uploadFile = createTempFile("upload.txt", TEST_CONTENT);
-    File downloadFile = createTempFile("download.txt", TEST_CONTENT);
-    File dirUploadFile = createTempFile("dir-upload.txt", TEST_CONTENT);
-    File finalUploadFile = createTempFile("final-upload.txt", TEST_CONTENT);
+    File uploadFile = createTempFile("upload.txt");
+    File downloadFile = createTempFile("download.txt");
+    File dirUploadFile = createTempFile("dir-upload.txt");
+    File finalUploadFile = createTempFile("final-upload.txt");
+    File tempDirectory = createTempDirectory();
     URL expectedUrl = createTestUrl();
 
+    when(secureTempFileManager.createSecureTempDirectory(anyString())).thenReturn(tempDirectory);
     when(secureTempFileManager.createSecureTempFileWithContent(
             anyString(), anyString(), anyString()))
         .thenReturn(uploadFile, dirUploadFile, finalUploadFile);
@@ -234,12 +249,14 @@ class HealthBucketServiceIT {
 
   @Test
   void should_create_files_with_correct_parameters() throws IOException {
-    File uploadFile = createTempFile("upload.txt", TEST_CONTENT);
-    File downloadFile = createTempFile("download.txt", TEST_CONTENT);
-    File dirUploadFile = createTempFile("dir-upload.txt", TEST_CONTENT);
-    File finalUploadFile = createTempFile("final-upload.txt", TEST_CONTENT);
+    File uploadFile = createTempFile("upload.txt");
+    File downloadFile = createTempFile("download.txt");
+    File dirUploadFile = createTempFile("dir-upload.txt");
+    File finalUploadFile = createTempFile("final-upload.txt");
+    File tempDirectory = createTempDirectory();
     URL expectedUrl = createTestUrl();
 
+    when(secureTempFileManager.createSecureTempDirectory(anyString())).thenReturn(tempDirectory);
     when(secureTempFileManager.createSecureTempFileWithContent(
             anyString(), anyString(), anyString()))
         .thenReturn(uploadFile, dirUploadFile, finalUploadFile);
@@ -254,10 +271,18 @@ class HealthBucketServiceIT {
             argThat(prefix -> prefix.startsWith("bucket-health-")), eq(".txt"), anyString());
   }
 
-  private File createTempFile(String filename, String content) throws IOException {
+  private File createTempFile(String filename) throws IOException {
     File file = new File(tempDir, filename);
-    Files.writeString(file.toPath(), content);
+    Files.writeString(file.toPath(), HealthBucketServiceIT.TEST_CONTENT);
     return file;
+  }
+
+  private File createTempDirectory() throws IOException {
+    File dir = new File(tempDir, "test-dir");
+    if (!dir.mkdir())
+      throw new IOException("Failed to create test directory: " + dir.getAbsolutePath());
+
+    return dir;
   }
 
   private URL createTestUrl() {

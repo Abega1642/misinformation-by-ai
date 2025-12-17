@@ -1,4 +1,4 @@
-package dev.razafindratelo.unfaked.service;
+package dev.razafindratelo.unfaked.service.health;
 
 import dev.razafindratelo.unfaked.InfraGenerated;
 import dev.razafindratelo.unfaked.event.model.DummyEvent;

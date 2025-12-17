@@ -1,8 +1,9 @@
-package dev.razafindratelo.unfaked.service;
+package dev.razafindratelo.unfaked.service.health;
 
 import static org.owasp.encoder.Encode.forJava;
 
 import dev.razafindratelo.unfaked.InfraGenerated;
+import dev.razafindratelo.unfaked.exception.health.EmailHealthCheckException;
 import dev.razafindratelo.unfaked.file.SecureTempFileManager;
 import dev.razafindratelo.unfaked.mail.Email;
 import dev.razafindratelo.unfaked.mail.Mailer;
@@ -33,9 +34,10 @@ public class HealthEmailService {
    *
    * @param recipientEmail the email address to send test emails to
    * @throws AddressException if the email address is invalid
-   * @throws IOException if there's an error creating the test attachment
+   * @throws EmailHealthCheckException if any test case fails
    */
-  public void sendHealthCheckEmails(String recipientEmail) throws AddressException, IOException {
+  public void sendHealthCheckEmails(String recipientEmail)
+      throws AddressException, EmailHealthCheckException {
     log.info("Starting email health check for: {}", forJava(recipientEmail));
 
     InternetAddress toAddress = validateAndParseEmail(recipientEmail);
@@ -57,16 +59,13 @@ public class HealthEmailService {
         new EmailTestCase("with-attachment", () -> sendEmailWithAttachment(toAddress)));
   }
 
-  private void executeTestCases(List<EmailTestCase> testCases) throws IOException {
+  private void executeTestCases(List<EmailTestCase> testCases) throws EmailHealthCheckException {
     for (EmailTestCase testCase : testCases) {
       try {
         testCase.execute();
-      } catch (IOException e) {
-        log.error("Failed to execute test case: {}", testCase.name(), e);
+      } catch (EmailHealthCheckException e) {
+        log.error("Email health check test failed: {}", testCase.name(), e);
         throw e;
-      } catch (Exception e) {
-        log.error("Unexpected error in test case: {}", testCase.name(), e);
-        throw new IOException("Email health check failed: " + testCase.name(), e);
       }
     }
   }
@@ -95,21 +94,29 @@ public class HealthEmailService {
   }
 
   private void sendEmailWithCc(InternetAddress toAddress, EmailComponents components)
-      throws AddressException {
-    InternetAddress ccAddress =
-        new InternetAddress(components.localPart() + "+cc" + components.domain());
-    mailer.accept(
-        createEmail(toAddress, List.of(ccAddress), null, "2/5] With cc", null, List.of()));
-    log.debug("Sent test email with CC");
+      throws EmailHealthCheckException {
+    try {
+      InternetAddress ccAddress =
+          new InternetAddress(components.localPart() + "+cc" + components.domain());
+      mailer.accept(
+          createEmail(toAddress, List.of(ccAddress), null, "2/5] With cc", null, List.of()));
+      log.debug("Sent test email with CC");
+    } catch (AddressException e) {
+      throw new EmailHealthCheckException("with-cc", "Failed to create CC address", e);
+    }
   }
 
   private void sendEmailWithBcc(InternetAddress toAddress, EmailComponents components)
-      throws AddressException {
-    InternetAddress bccAddress =
-        new InternetAddress(components.localPart() + "+bcc" + components.domain());
-    mailer.accept(
-        createEmail(toAddress, null, List.of(bccAddress), "3/5] With bcc", null, List.of()));
-    log.debug("Sent test email with BCC");
+      throws EmailHealthCheckException {
+    try {
+      InternetAddress bccAddress =
+          new InternetAddress(components.localPart() + "+bcc" + components.domain());
+      mailer.accept(
+          createEmail(toAddress, null, List.of(bccAddress), "3/5] With bcc", null, List.of()));
+      log.debug("Sent test email with BCC");
+    } catch (AddressException e) {
+      throw new EmailHealthCheckException("with-bcc", "Failed to create BCC address", e);
+    }
   }
 
   private void sendEmailWithBody(InternetAddress toAddress) {
@@ -124,16 +131,17 @@ public class HealthEmailService {
     log.debug("Sent test email with HTML body");
   }
 
-  private void sendEmailWithAttachment(InternetAddress toAddress) throws IOException {
+  private void sendEmailWithAttachment(InternetAddress toAddress) throws EmailHealthCheckException {
     String attachmentContent =
         String.format(
             "This is a test attachment from Unfaked.%nTimestamp: %d", System.currentTimeMillis());
 
-    File attachment =
-        secureTempFileManager.createSecureTempFileWithContent(
-            TEST_ATTACHMENT_PREFIX, TEST_ATTACHMENT_SUFFIX, attachmentContent);
-
+    File attachment = null;
     try {
+      attachment =
+          secureTempFileManager.createSecureTempFileWithContent(
+              TEST_ATTACHMENT_PREFIX, TEST_ATTACHMENT_SUFFIX, attachmentContent);
+
       mailer.accept(
           createEmail(
               toAddress,
@@ -143,8 +151,13 @@ public class HealthEmailService {
               "<p>This email has an attachment</p>",
               List.of(attachment)));
       log.debug("Sent test email with attachment");
+    } catch (IOException e) {
+      throw new EmailHealthCheckException(
+          "with-attachment", "Failed to create or send attachment", e);
     } finally {
-      secureTempFileManager.deleteTempFile(attachment);
+      if (attachment != null) {
+        secureTempFileManager.deleteTempFile(attachment);
+      }
     }
   }
 
@@ -164,9 +177,14 @@ public class HealthEmailService {
         attachments);
   }
 
+  /**
+   * Functional interface for executing email test cases.
+   *
+   * @throws EmailHealthCheckException if the test case execution fails
+   */
   @FunctionalInterface
   private interface TestCaseExecutor {
-    void execute() throws Exception;
+    void execute() throws EmailHealthCheckException;
   }
 
   /** Record to hold parsed email components. */
@@ -174,7 +192,7 @@ public class HealthEmailService {
 
   /** Record to encapsulate a test case with its name and execution logic. */
   private record EmailTestCase(String name, TestCaseExecutor executor) {
-    void execute() throws Exception {
+    void execute() throws EmailHealthCheckException {
       executor.execute();
     }
   }

@@ -2,8 +2,10 @@ package dev.razafindratelo.unfaked.service;
 
 import static org.owasp.encoder.Encode.forJava;
 
+import dev.razafindratelo.unfaked.exception.MediaUploadException;
 import dev.razafindratelo.unfaked.file.BucketComponent;
 import dev.razafindratelo.unfaked.file.FilenameSanitizer;
+import dev.razafindratelo.unfaked.file.TempFileCleaner;
 import dev.razafindratelo.unfaked.mapper.MediaMapper;
 import dev.razafindratelo.unfaked.model.Media;
 import dev.razafindratelo.unfaked.model.User;
@@ -27,12 +29,14 @@ public class MediaService {
 
   private static final int KILO = 1024;
   private static final int MAX_SIZE_ALLOWED = 100 * KILO * KILO;
+
   private final MediaRepository mediaRepository;
   private final MediaMapper mediaMapper;
   private final BucketComponent bucketComponent;
   private final MultipartFileToMediaConverter mediaConverter;
   private final UserService userService;
   private final FilenameSanitizer filenameSanitizer;
+  private final TempFileCleaner tempFileCleaner;
 
   @Transactional
   public Media uploadMedia(MultipartFile multipartFile, String userEmail) {
@@ -63,9 +67,9 @@ public class MediaService {
           "Failed to convert multipart file to temporary file: filename={}",
           forJava(multipartFile.getOriginalFilename()),
           e);
-      throw new RuntimeException("Failed to process file for upload", e);
+      throw new MediaUploadException("Failed to process file for upload", e);
     } finally {
-      cleanupTempFile(tempFile);
+      tempFileCleaner.cleanUp(tempFile);
     }
 
     JMedia jMedia = mediaMapper.toPersistence(media);
@@ -107,13 +111,5 @@ public class MediaService {
     }
 
     return tempFile;
-  }
-
-  private void cleanupTempFile(File tempFile) {
-    if (tempFile != null && tempFile.exists()) {
-      boolean deleted = tempFile.delete();
-      if (!deleted)
-        log.warn("Failed to delete temporary file: path={}", forJava(tempFile.getAbsolutePath()));
-    }
   }
 }
