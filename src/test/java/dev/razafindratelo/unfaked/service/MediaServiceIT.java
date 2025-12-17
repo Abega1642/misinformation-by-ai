@@ -14,6 +14,7 @@ import static org.mockito.Mockito.when;
 
 import dev.razafindratelo.unfaked.file.BucketComponent;
 import dev.razafindratelo.unfaked.file.FilenameSanitizer;
+import dev.razafindratelo.unfaked.file.TempFileCleaner;
 import dev.razafindratelo.unfaked.mapper.MediaMapper;
 import dev.razafindratelo.unfaked.model.Media;
 import dev.razafindratelo.unfaked.model.User;
@@ -50,6 +51,7 @@ class MediaServiceIT {
   @Mock private UserService userService;
   @Mock private MultipartFile multipartFile;
   @Mock private FilenameSanitizer filenameSanitizer;
+  @Mock private TempFileCleaner tempFileCleaner;
 
   @InjectMocks private MediaService subject;
 
@@ -112,6 +114,7 @@ class MediaServiceIT {
     verify(bucketComponent).upload(any(File.class), eq(TEST_BUCKET_KEY));
     verify(mediaRepository).save(testJMedia);
     verify(mediaMapper).toCoreModel(testJMedia);
+    verify(tempFileCleaner).cleanUp(any(File.class));
   }
 
   @Test
@@ -127,6 +130,7 @@ class MediaServiceIT {
     verify(userService, never()).findByEmail(any());
     verify(bucketComponent, never()).upload(any(), any());
     verify(mediaRepository, never()).save(any());
+    verify(tempFileCleaner, never()).cleanUp(any());
   }
 
   @Test
@@ -135,7 +139,6 @@ class MediaServiceIT {
     when(multipartFile.getSize()).thenReturn(0L);
     when(multipartFile.getOriginalFilename()).thenReturn(TEST_FILENAME);
 
-    // Sanitizer is *never called*, so it must be lenient
     lenient().when(filenameSanitizer.apply(TEST_FILENAME)).thenReturn(TEST_FILENAME);
 
     IllegalArgumentException exception =
@@ -147,6 +150,7 @@ class MediaServiceIT {
     verify(userService, never()).findByEmail(any());
     verify(bucketComponent, never()).upload(any(), any());
     verify(mediaRepository, never()).save(any());
+    verify(tempFileCleaner, never()).cleanUp(any());
   }
 
   @Test
@@ -167,6 +171,7 @@ class MediaServiceIT {
     verify(userService, never()).findByEmail(any());
     verify(bucketComponent, never()).upload(any(), any());
     verify(mediaRepository, never()).save(any());
+    verify(tempFileCleaner, never()).cleanUp(any());
   }
 
   @Test
@@ -255,5 +260,26 @@ class MediaServiceIT {
 
     assertNotNull(result);
     verify(mediaMapper).toCoreModel(testJMedia);
+  }
+
+  @Test
+  void upload_media_should_cleanup_temp_file_even_on_bucket_upload_failure() throws Exception {
+    when(multipartFile.isEmpty()).thenReturn(false);
+    when(multipartFile.getSize()).thenReturn(TEST_FILE_SIZE_BYTES);
+    when(multipartFile.getOriginalFilename()).thenReturn(TEST_FILENAME);
+    when(multipartFile.getBytes()).thenReturn(new byte[100]);
+
+    when(filenameSanitizer.apply(TEST_FILENAME)).thenReturn(TEST_FILENAME);
+    when(userService.findByEmail(TEST_USER_EMAIL)).thenReturn(testUser);
+    when(mediaConverter.apply(multipartFile, testUser)).thenReturn(testMedia);
+
+    // Simulate bucket upload failure
+    when(bucketComponent.upload(any(File.class), eq(TEST_BUCKET_KEY)))
+        .thenThrow(new RuntimeException("Bucket upload failed"));
+
+    assertThrows(RuntimeException.class, () -> subject.uploadMedia(multipartFile, TEST_USER_EMAIL));
+
+    verify(tempFileCleaner).cleanUp(any(File.class));
+    verify(mediaRepository, never()).save(any());
   }
 }

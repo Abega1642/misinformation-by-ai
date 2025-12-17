@@ -1,5 +1,8 @@
 package dev.razafindratelo.unfaked.endpoint.rest.controller;
 
+import static java.lang.String.format;
+import static org.owasp.encoder.Encode.forJava;
+
 import dev.razafindratelo.unfaked.endpoint.rest.controller.model.ErrorResponse;
 import dev.razafindratelo.unfaked.exception.ApiKeyGenerationException;
 import dev.razafindratelo.unfaked.exception.DirectoryUploadException;
@@ -12,6 +15,7 @@ import dev.razafindratelo.unfaked.exception.SearchException;
 import dev.razafindratelo.unfaked.exception.TemplateLoadingException;
 import dev.razafindratelo.unfaked.exception.bucket.BucketHealthCheckException;
 import dev.razafindratelo.unfaked.exception.bucket.BucketOperationException;
+import dev.razafindratelo.unfaked.exception.health.EmailHealthCheckException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ConstraintViolationException;
 import java.util.stream.Collectors;
@@ -45,7 +49,7 @@ public class ApiExceptionHandler {
     var errorResponse =
         ErrorResponse.of(
             HttpStatus.BAD_REQUEST,
-            "Required parameter '" + ex.getParameterName() + "' is missing",
+            format("Required parameter '%s' is missing", ex.getParameterName()),
             getRequestPath(request),
             "MISSING_REQUIRED_PARAMETER");
 
@@ -64,6 +68,32 @@ public class ApiExceptionHandler {
             ex.getErrorCode());
 
     return new ResponseEntity<>(errorResponse, HttpStatus.SERVICE_UNAVAILABLE);
+  }
+
+  @ExceptionHandler(EmailHealthCheckException.class)
+  public ResponseEntity<ErrorResponse> handleEmailHealthCheckException(
+      EmailHealthCheckException ex, WebRequest request) {
+
+    log.error(
+        "Email health check failed at path: {}, test case: {}",
+        forJava(getRequestPath(request)),
+        forJava(ex.getTestCaseName()),
+        ex);
+
+    String errorMessage =
+        format(
+            "Email health check failed at test case '%s': %s",
+            ex.getTestCaseName(),
+            ex.getCause() != null ? ex.getCause().getMessage() : ex.getMessage());
+
+    var errorResponse =
+        ErrorResponse.of(
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            errorMessage,
+            getRequestPath(request),
+            "EMAIL_HEALTH_CHECK_FAILED");
+
+    return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
   }
 
   @ExceptionHandler(BucketOperationException.class)

@@ -6,7 +6,6 @@ import static java.util.UUID.randomUUID;
 import static org.owasp.encoder.Encode.forJava;
 
 import dev.razafindratelo.unfaked.endpoint.rest.controller.model.UserRequest;
-import dev.razafindratelo.unfaked.exception.InvalidUserDataException;
 import dev.razafindratelo.unfaked.exception.ResourceDuplicatedException;
 import dev.razafindratelo.unfaked.exception.UserRegistrationException;
 import dev.razafindratelo.unfaked.mapper.UserMapper;
@@ -149,10 +148,6 @@ public class UserService {
       throw new ResourceDuplicatedException(
           format("User with clerk_id '%s' already exists", userRequest.clerkId()));
     }
-
-    if (userRequest.password() != null && !userRequest.password().isBlank())
-      if (userRequest.password().length() < 8)
-        throw new InvalidUserDataException("Password must be at least 8 characters long");
   }
 
   public Page<User> getAllUsers(Integer page, Integer size) {

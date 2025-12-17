@@ -11,6 +11,7 @@ import static org.mockito.Mockito.verify;
 import dev.razafindratelo.unfaked.InfraGenerated;
 import dev.razafindratelo.unfaked.event.model.DummyEvent;
 import dev.razafindratelo.unfaked.event.model.EventProducer;
+import dev.razafindratelo.unfaked.service.health.HealthEventService;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
