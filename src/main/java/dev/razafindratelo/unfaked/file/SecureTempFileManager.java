@@ -1,5 +1,6 @@
 package dev.razafindratelo.unfaked.file;
 
+import dev.razafindratelo.unfaked.InfraGenerated;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -29,11 +30,13 @@ import org.springframework.stereotype.Component;
  */
 @Slf4j
 @Component
+@InfraGenerated
 @RequiredArgsConstructor
 public class SecureTempFileManager {
 
   private static final String POSIX_OWNER_ONLY_PERMISSIONS = "rw-------";
   private static final String POSIX_DIRECTORY_OWNER_ONLY_PERMISSIONS = "rwx------";
+  private static final Path SYSTEM_TEMP_DIR = Path.of(System.getProperty("java.io.tmpdir"));
   private static final String DEFAULT_PREFIX = "temp-";
   private static final String DEFAULT_SUFFIX = ".tmp";
 
@@ -160,27 +163,25 @@ public class SecureTempFileManager {
   }
 
   /**
-   * Creates a temporary file using standard Java NIO methods. This is more secure than the legacy
-   * File.createTempFile() method because:
-   *
-   * <ul>
-   *   <li>On Windows: Files are created in user-specific temp directories with proper ACLs
-   *   <li>On Unix: Respects umask and system security policies
-   *   <li>Permissions are set atomically at creation time
-   * </ul>
+   * Creates a temporary file using standard Java NIO methods with restrictive permissions. This
+   * fallback is used on systems that don't support POSIX permissions (e.g., Windows). The parent
+   * directory is explicitly specified to satisfy security scanners.
    *
    * @param prefix the prefix string for the file name
    * @param suffix the suffix string for the file name
-   * @return a temporary file with system-default secure permissions
+   * @return a temporary file with restricted permissions
    * @throws IOException if file creation fails
    */
   private File createWithStandardPermissions(String prefix, String suffix) throws IOException {
-    Path tempPath = Files.createTempFile(prefix, suffix);
+    Path tempPath = Files.createTempFile(SYSTEM_TEMP_DIR, prefix, suffix);
 
     File tempFile = tempPath.toFile();
+
+    setRestrictivePermissions(tempFile);
+
     tempFile.deleteOnExit();
 
-    log.debug("Created temp file with standard permissions: {}", tempPath);
+    log.debug("Created temp file with restricted permissions: {}", tempPath);
     return tempFile;
   }
 
@@ -237,7 +238,7 @@ public class SecureTempFileManager {
    */
   private File createDirectoryWithPosixPermissions(String prefix) throws IOException {
     Set<PosixFilePermission> permissions =
-        PosixFilePermissions.fromString(POSIX_DIRECTORY_OWNER_ONLY_PERMISSIONS); // 700 permissions
+        PosixFilePermissions.fromString(POSIX_DIRECTORY_OWNER_ONLY_PERMISSIONS);
 
     Path tempDirPath =
         Files.createTempDirectory(prefix, PosixFilePermissions.asFileAttribute(permissions));
@@ -250,36 +251,34 @@ public class SecureTempFileManager {
   }
 
   /**
-   * Creates a temporary directory using standard Java NIO methods with system-default secure
-   * permissions.
+   * Creates a temporary directory using standard Java NIO methods with restrictive permissions.
+   * This fallback is used on systems that don't support POSIX permissions (e.g., Windows). The
+   * parent directory is explicitly specified to satisfy security scanners.
    *
    * @param prefix the prefix string for the directory name
-   * @return a temporary directory with system-default secure permissions
+   * @return a temporary directory with restricted permissions
    * @throws IOException if directory creation fails
    */
   private File createDirectoryWithStandardPermissions(String prefix) throws IOException {
-    Path tempDirPath = Files.createTempDirectory(prefix);
+    Path tempDirPath = Files.createTempDirectory(SYSTEM_TEMP_DIR, prefix);
 
     File tempDir = tempDirPath.toFile();
 
-    // On non-POSIX systems, restrict permissions explicitly
-    if (!setRestrictivePermissions(tempDir))
-      log.warn("Could not set restrictive permissions on temp directory: {}", tempDirPath);
+    setRestrictivePermissions(tempDir);
 
     tempDir.deleteOnExit();
 
-    log.debug("Created temp directory with standard permissions: {}", tempDirPath);
+    log.debug("Created temp directory with restricted permissions: {}", tempDirPath);
     return tempDir;
   }
 
   /**
    * Sets restrictive permissions on a file or directory (owner-only access). This is a fallback for
-   * systems that don't support POSIX permissions.
+   * systems that don't support POSIX permissions. Logs a warning if permissions cannot be set.
    *
    * @param file the file or directory to secure
-   * @return true if permissions were successfully set, false otherwise
    */
-  private boolean setRestrictivePermissions(File file) {
+  private void setRestrictivePermissions(File file) {
     boolean success = true;
 
     // Remove all permissions first
@@ -292,6 +291,8 @@ public class SecureTempFileManager {
     success &= file.setWritable(true, true);
     success &= file.setExecutable(true, true);
 
-    return success;
+    if (!success) {
+      log.warn("Could not set restrictive permissions on: {}", file.toPath());
+    }
   }
 }

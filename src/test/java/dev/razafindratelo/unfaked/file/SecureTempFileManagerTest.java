@@ -145,13 +145,16 @@ class SecureTempFileManagerTest {
 
   @Test
   void should_handle_deleting_null_file() {
-    subject.deleteTempFile(null);
+    assertDoesNotThrow(() -> subject.deleteTempFile(null));
   }
 
   @Test
   void should_handle_deleting_non_existent_file() {
     File nonExistentFile = new File("/tmp/non-existent-file-" + System.currentTimeMillis());
-    subject.deleteTempFile(nonExistentFile);
+
+    assertFalse(nonExistentFile.exists(), "File should not exist before test");
+    assertDoesNotThrow(() -> subject.deleteTempFile(nonExistentFile));
+    assertFalse(nonExistentFile.exists(), "File should still not exist after delete attempt");
   }
 
   @Test
@@ -526,18 +529,12 @@ class SecureTempFileManagerTest {
   }
 
   private void deleteFileIfExists(File file) {
-    if (file != null && file.exists()) {
-      if (!file.delete()) {
-        log.error("Failed to delete file: {}", forJava(file.getAbsolutePath()));
-      }
-    }
+    if (file != null && file.exists() && !file.delete())
+      log.error("Failed to delete file: {}", forJava(file.getAbsolutePath()));
   }
 
   private void deleteDirectoryIfExists(File directory) {
-    if (directory != null && directory.exists() && directory.isDirectory()) {
-      if (!directory.delete()) {
-        log.error("Failed to delete directory: {}", forJava(directory.getAbsolutePath()));
-      }
-    }
+    if (directory != null && directory.exists() && directory.isDirectory() && !directory.delete())
+      log.error("Failed to delete directory: {}", forJava(directory.getAbsolutePath()));
   }
 }
