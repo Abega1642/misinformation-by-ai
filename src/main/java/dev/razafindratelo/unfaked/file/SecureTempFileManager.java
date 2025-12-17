@@ -33,6 +33,7 @@ import org.springframework.stereotype.Component;
 public class SecureTempFileManager {
 
   private static final String POSIX_OWNER_ONLY_PERMISSIONS = "rw-------";
+  private static final String POSIX_DIRECTORY_OWNER_ONLY_PERMISSIONS = "rwx------";
   private static final String DEFAULT_PREFIX = "temp-";
   private static final String DEFAULT_SUFFIX = ".tmp";
 
@@ -195,5 +196,102 @@ public class SecureTempFileManager {
       throw new IllegalArgumentException("Prefix must be at least 3 characters long");
 
     if (suffix == null) throw new IllegalArgumentException("Suffix cannot be null");
+  }
+
+  /**
+   * Creates a secure temporary directory with owner-only permissions. The directory is created with
+   * restricted permissions to prevent information disclosure.
+   *
+   * <p>Security considerations:
+   *
+   * <ul>
+   *   <li>On POSIX systems: Created with rwx------ (700) permissions
+   *   <li>On Windows: Created in user-specific temp directory with appropriate ACLs
+   *   <li>Directory is marked for deletion on JVM exit via deleteOnExit()
+   * </ul>
+   *
+   * @param prefix the prefix string to be used in generating the directory's name
+   * @return a secure temporary directory
+   * @throws IOException if directory creation fails
+   * @throws IllegalArgumentException if prefix is invalid
+   */
+  public File createSecureTempDirectory(String prefix) throws IOException {
+    if (prefix == null || prefix.length() < 3)
+      throw new IllegalArgumentException("Prefix must be at least 3 characters long");
+
+    try {
+      return createDirectoryWithPosixPermissions(prefix);
+    } catch (UnsupportedOperationException e) {
+      log.debug("POSIX permissions not supported, using standard directory creation");
+      return createDirectoryWithStandardPermissions(prefix);
+    }
+  }
+
+  /**
+   * Creates a temporary directory with POSIX permissions (owner-only read/write/execute).
+   *
+   * @param prefix the prefix string for the directory name
+   * @return a secure temporary directory
+   * @throws IOException if directory creation fails
+   * @throws UnsupportedOperationException if POSIX permissions are not supported
+   */
+  private File createDirectoryWithPosixPermissions(String prefix) throws IOException {
+    Set<PosixFilePermission> permissions =
+        PosixFilePermissions.fromString(POSIX_DIRECTORY_OWNER_ONLY_PERMISSIONS); // 700 permissions
+
+    Path tempDirPath =
+        Files.createTempDirectory(prefix, PosixFilePermissions.asFileAttribute(permissions));
+
+    File tempDir = tempDirPath.toFile();
+    tempDir.deleteOnExit();
+
+    log.debug("Created secure temp directory with POSIX permissions (rwx------): {}", tempDirPath);
+    return tempDir;
+  }
+
+  /**
+   * Creates a temporary directory using standard Java NIO methods with system-default secure
+   * permissions.
+   *
+   * @param prefix the prefix string for the directory name
+   * @return a temporary directory with system-default secure permissions
+   * @throws IOException if directory creation fails
+   */
+  private File createDirectoryWithStandardPermissions(String prefix) throws IOException {
+    Path tempDirPath = Files.createTempDirectory(prefix);
+
+    File tempDir = tempDirPath.toFile();
+
+    // On non-POSIX systems, restrict permissions explicitly
+    if (!setRestrictivePermissions(tempDir))
+      log.warn("Could not set restrictive permissions on temp directory: {}", tempDirPath);
+
+    tempDir.deleteOnExit();
+
+    log.debug("Created temp directory with standard permissions: {}", tempDirPath);
+    return tempDir;
+  }
+
+  /**
+   * Sets restrictive permissions on a file or directory (owner-only access). This is a fallback for
+   * systems that don't support POSIX permissions.
+   *
+   * @param file the file or directory to secure
+   * @return true if permissions were successfully set, false otherwise
+   */
+  private boolean setRestrictivePermissions(File file) {
+    boolean success = true;
+
+    // Remove all permissions first
+    success &= file.setReadable(false, false);
+    success &= file.setWritable(false, false);
+    success &= file.setExecutable(false, false);
+
+    // Set owner-only permissions
+    success &= file.setReadable(true, true);
+    success &= file.setWritable(true, true);
+    success &= file.setExecutable(true, true);
+
+    return success;
   }
 }
