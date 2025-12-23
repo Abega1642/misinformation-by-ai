@@ -7,14 +7,11 @@ info:
     name: Abegà Razafindratelo
     email: a.razafindratelo@gmail.com
     url: https://github.com/Abega1642
-
 servers:
   - url: https://preprod-misinformation-by-ai-1.onrender.com
     description: Preprod server
   - url: https://misinformation-by-ai.onrender.com
     description: Prod server
-
-
 tags:
   - name: Health
     description: Endpoints to verify system and bucket health (public access)
@@ -22,8 +19,6 @@ tags:
     description: API documentation endpoints and redirects
   - name: Authentication
     description: Authentication
-
-
 paths:
   /:
     get:
@@ -40,8 +35,6 @@ paths:
               schema:
                 type: string
                 example: /doc
-
-
   /ping:
     get:
       operationId: pong
@@ -56,7 +49,6 @@ paths:
               schema:
                 type: string
                 example: pong
-
   /health/bucket:
     get:
       operationId: healthBucketCheck
@@ -64,8 +56,8 @@ paths:
         - Health
       summary: Check bucket health by uploading, downloading, and presigning a file
       description: >
-        This endpoint uploads a randomly generated text file to the storage bucket, 
-        verifies its content by downloading it, and returns a presigned URL for the file.
+        This endpoint uploads a randomly generated text file to the storage bucket,  verifies its content by downloading it, and returns a presigned URL for the file.
+
       responses:
         200:
           description: Successfully uploaded, verified, and presigned file.
@@ -84,7 +76,6 @@ paths:
                   error:
                     type: string
                     example: Uploaded and downloaded content mismatch
-
   /health/message:
     get:
       operationId: triggerDummyEvents
@@ -92,8 +83,8 @@ paths:
         - Health
       summary: Trigger dummy health check events
       description: >
-        This endpoint triggers one or more dummy events through the event producer 
-        for testing the messaging system (e.g., RabbitMQ or Kafka).
+        This endpoint triggers one or more dummy events through the event producer  for testing the messaging system (e.g., RabbitMQ or Kafka).
+
       parameters:
         - name: nbEvent
           in: query
@@ -134,7 +125,6 @@ paths:
                   error:
                     type: string
                     example: nbEvent must be between 1 and 500
-
   /health/db:
     get:
       summary: Health check for the dummy database
@@ -182,7 +172,6 @@ paths:
                   totalPages: 1
                   number: 0
                   size: 5
-
   /auth/login:
     post:
       operationId: login
@@ -191,6 +180,7 @@ paths:
       summary: User login
       description: >
         Authenticates a user with email and clerkId. Returns user information.
+
       requestBody:
         required: true
         content:
@@ -221,7 +211,6 @@ paths:
           $ref: "#/components/responses/AuthenticationFailed"
         "403":
           $ref: "#/components/responses/ForbiddenLoginOrClient"
-
   /api/v1/medias/upload:
     post:
       operationId: uploadMedia
@@ -229,10 +218,10 @@ paths:
         - Medias
       summary: Upload a media (video, audio, image)
       description: >
-        Uploads a media file (video, audio, image) to the storage bucket.
-        **Requires client credentials and Bearer token authentication.**
+        Uploads a media file (video, audio, image) to the storage bucket. **Requires client credentials and Bearer token authentication.**
+
       security:
-        - BearerAuth: [ ]
+        - BearerAuth: []
       parameters:
         - name: from-userEmail
           in: query
@@ -280,9 +269,6 @@ paths:
           $ref: "#/components/responses/InvalidClientCredentials"
         "500":
           $ref: "#/components/responses/InternalServerError"
-
-
-
   /api/v1/detections/texts:
     post:
       tags:
@@ -328,9 +314,6 @@ paths:
           $ref: "#/components/responses/InvalidClientCredentials"
         "500":
           $ref: "#/components/responses/InternalServerError"
-
-
-
   /api/media/texts/upload:
     post:
       operationId: uploadText
@@ -338,10 +321,10 @@ paths:
         - Text
       summary: Upload texts
       description: >
-        Uploads text to be treated later.
-        **Bearer token authentication.**
+        Uploads text to be treated later. **Bearer token authentication.**
+
       security:
-        - BearerAuth: [ ]
+        - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -374,7 +357,6 @@ paths:
           $ref: "#/components/responses/InvalidClientCredentials"
         "500":
           $ref: "#/components/responses/InternalServerError"
-
   /users:
     get:
       summary: Get all registered users
@@ -390,7 +372,6 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/User"
-
   /users/sign-up:
     post:
       summary: Register a new user
@@ -410,7 +391,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/User"
-
   /auth/token:
     post:
       summary: Post the token of the user
@@ -430,8 +410,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Token"
-
-
 components:
   responses:
     Unauthorized:
@@ -447,7 +425,6 @@ components:
             message: "Authentication required"
             path: "/api/endpoint"
             errorCode: "MISSING_AUTHORIZATION"
-
     AuthenticationFailed:
       description: Authentication failed - invalid credentials
       content:
@@ -461,7 +438,6 @@ components:
             message: "Invalid email or password"
             path: "/auth/login"
             errorCode: "AUTHENTICATION_FAILED"
-
     InvalidRefreshToken:
       description: Invalid or expired refresh token
       content:
@@ -475,7 +451,6 @@ components:
             message: "Refresh token is invalid or has expired"
             path: "/auth/token/refresh-token-pairs"
             errorCode: "INVALID_TOKEN"
-
     InvalidClientCredentials:
       description: Invalid or missing client credentials
       content:
@@ -489,7 +464,6 @@ components:
             message: "Invalid or missing client credentials"
             path: "/api/endpoint"
             errorCode: "AUTHORIZATION_DENIED"
-
     ForbiddenLoginOrClient:
       description: User account is not activated or invalid client credentials
       content:
@@ -513,7 +487,6 @@ components:
                 message: "Invalid or missing client credentials"
                 path: "/auth/login"
                 errorCode: "AUTHORIZATION_DENIED"
-
     ForbiddenAdminOrClient:
       description: Access denied - ADMIN role required, missing API key, or invalid client credentials
       content:
@@ -545,7 +518,6 @@ components:
                 message: "Invalid or missing client credentials"
                 path: "/users"
                 errorCode: "AUTHORIZATION_DENIED"
-
     UserNotFound:
       description: User not found
       content:
@@ -559,7 +531,6 @@ components:
             message: "User not found"
             path: "/api/endpoint"
             errorCode: "ENTITY_NOT_FOUND"
-
     BadRequestValidation:
       description: Invalid request data or validation failure
       content:
@@ -573,7 +544,6 @@ components:
             message: "Email format is invalid or password does not meet requirements"
             path: "/sign-up"
             errorCode: "CONSTRAINT_VIOLATION_ON_FIELDS"
-
     InternalServerError:
       description: Internal server error
       content:
@@ -587,7 +557,6 @@ components:
             message: "An unexpected error occurred"
             path: "/api/endpoint"
             errorCode: "INTERNAL_SERVER_ERROR"
-
   securitySchemes:
     BearerAuth:
       type: http
@@ -607,7 +576,6 @@ components:
         - TB
         - PB
         - EB
-
     AudioCodec:
       type: string
       enum:
@@ -631,7 +599,6 @@ components:
         - G711
         - G722
         - UNKNOWN
-
     ContainerFormat:
       type: string
       enum:
@@ -653,7 +620,6 @@ components:
         - APE
         - AIFF
         - UNKNOWN
-
     Codec:
       type: string
       enum:
@@ -678,46 +644,39 @@ components:
         - DIVX
         - HEVC
         - UNKNOWN
-
     FileType:
       type: string
       enum:
         - VIDEO
         - IMAGE
         - AUDIO
-
     UUID:
       type: string
       pattern: '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'
       format: uuid
       example: e6b5cc3e-eaaa-4cb3-912c-e059e983bb78
-
     Date:
       type: string
       format: date-time
       description: 'Date and time in ISO 8601 format (RFC 3339)'
       example: '2025-12-06T11:23:45Z'
-
     Email:
       type: string
       format: email
       pattern: '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
       example: a.razafindratelo@gmail.com
       description: User's email address
-
     FullName:
       type: string
       example: Abegà Razafindratelo
-
     Dummy:
       type: object
-      required: [ id, description ]
+      required: [id, description]
       properties:
         id:
           $ref: "#/components/schemas/UUID"
         description:
           type: string
-
     TokenRequest:
       type: object
       properties:
@@ -729,7 +688,6 @@ components:
         expiration_date:
           type: string
           format: date
-
     Token:
       type: object
       properties:
@@ -743,7 +701,6 @@ components:
         expiration_date:
           type: string
           format: date
-
     ErrorResponse:
       type: object
       properties:
@@ -792,16 +749,14 @@ components:
         - error
         - message
         - path
-
     LoginRequest:
       type: object
-      required: [ email, clerk_id ]
+      required: [email, clerk_id]
       properties:
         email:
           $ref: "#/components/schemas/Email"
         clerk_id:
           $ref: "#/components/schemas/UUID"
-
     TextDetectionResult:
       type: object
       required:
@@ -822,7 +777,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Proof'
-
     User:
       type: object
       required:
@@ -850,13 +804,11 @@ components:
           $ref: "#/components/schemas/Date"
         createdAt:
           $ref: "#/components/schemas/Date"
-
     UserRole:
       type: string
       enum:
         - ADMIN
         - USER
-
     UserStatus:
       type: string
       enum:
@@ -864,7 +816,6 @@ components:
         - INACTIVE
         - SUSPENDED
         - DELETED
-
     Proof:
       type: object
       required:
@@ -884,7 +835,6 @@ components:
           description: Optional snippet of the proof
         type:
           $ref: '#/components/schemas/ProofType'
-
     ProofType:
       type: string
       description: The type of proof
@@ -892,10 +842,9 @@ components:
         - SUPPORTING
         - REFUTING
         - NEUTRAL
-
     UserCreateRequest:
       type: object
-      required: [ email, full_name, clerk_id ]
+      required: [email, full_name, clerk_id]
       properties:
         email:
           $ref: "#/components/schemas/Email"
@@ -903,7 +852,6 @@ components:
           $ref: "#/components/schemas/FullName"
         clerk_id:
           $ref: "#/components/schemas/UUID"
-
     LoginResponse:
       type: object
       properties:
@@ -916,8 +864,6 @@ components:
           $ref: "#/components/schemas/Date"
         user:
           $ref: "#/components/schemas/User"
-
-
     Media:
       type: object
       required:
@@ -951,8 +897,6 @@ components:
         fileType:
           $ref: '#/components/schemas/FileType'
           description: Derived from fileExtension
-
-
     FileExtension:
       type: string
       description: File extension type
@@ -967,7 +911,6 @@ components:
         - BMP
         - TIFF
         - ICO
-
         # Videos
         - MP4
         - AVI
@@ -978,7 +921,6 @@ components:
         - WEBM
         - MPEG
         - MPG
-
         # Audio
         - MP3
         - WAV
@@ -989,8 +931,6 @@ components:
         - M4A
         - OPUS
         - AIFF
-
-
     TextRequest:
       type: object
       properties:
@@ -999,7 +939,6 @@ components:
         text:
           type: string
           example: The sun is black
-
     Text:
       type: object
       properties:
@@ -1012,6 +951,5 @@ components:
           example: The sun is black
         created_at:
           $ref: "#/components/schemas/Date"
-
 security:
-  - BearerAuth: [ ]
+  - BearerAuth: []
