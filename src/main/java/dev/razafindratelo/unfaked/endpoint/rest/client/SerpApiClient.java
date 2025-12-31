@@ -25,7 +25,7 @@ public class SerpApiClient {
   @Value("${google.api-key}")
   private String apiKey;
 
-  @Value("${google.api.engine:google_ai_mode}")
+  @Value("${google.api-engine:google_ai_mode}")
   private String searchEngine;
 
   public JsonObject search(@NotBlank String query) {

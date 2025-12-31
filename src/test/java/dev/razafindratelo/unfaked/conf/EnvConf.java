@@ -9,6 +9,7 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 public class EnvConf {
 
   public void configureProperties(DynamicPropertyRegistry registry) {
+    registry.add("SPRING_PROFILES_ACTIVE", () -> "test");
     registry.add("spring.rabbitmq.exchange", () -> "infra-event-exchange");
     registry.add("spring.rabbitmq.queue", () -> "infra-health-queue");
     registry.add("spring.rabbitmq.routing-key", () -> "spring.event.key");
@@ -19,8 +20,6 @@ public class EnvConf {
     registry.add("groq.api.key", () -> "test-groq-api-key");
     registry.add("google.api", () -> "https://serpapi.com");
     registry.add("google.api-key", () -> "test-google-api-key");
-    registry.add("google.api-key", () -> "test-google-api-key");
-    registry.add("google.api.engine", () -> "google_ai_mode");
-    registry.add("google.api.engine", () -> "google_ai_mode");
+    registry.add("google.api-engine", () -> "google_ai_mode");
   }
 }
