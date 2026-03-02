@@ -57,7 +57,7 @@ dependencies {
     implementation 'commons-io:commons-io:2.21.0'
     implementation 'org.apache.commons:commons-compress:1.28.0'
 
-    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.14'
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.16'
     implementation 'net.bramp.ffmpeg:ffmpeg:0.8.0'
 
     implementation 'org.owasp.encoder:encoder:1.4.0'
